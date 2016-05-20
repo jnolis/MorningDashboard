@@ -6,12 +6,12 @@
    Client:{
     commuteBlock:function()
     {
-     var output,arg10,repeater;
+     var output,arg10,repeater,arg10d;
      arg10=Runtime.New(T,{
       $:0
      });
      output=Operators.add(Tags.Tags().NewTag("div",arg10),List.ofArray([Attr.Attr().NewAttr("id","CommuteOutput")]));
-     repeater=function()
+     repeater=function(commuteBlock)
      {
       return Concurrency.Start(Concurrency.Delay(function()
       {
@@ -32,7 +32,7 @@
            arg101=List.ofArray([Tags.Tags().NewTag("td",arg102),Tags.Tags().NewTag("td",arg103)]);
            return Tags.Tags().NewTag("tr",arg101);
           },arrivalStrings);
-          output["HtmlProvider@33"].Clear(output.get_Body());
+          commuteBlock["HtmlProvider@33"].Clear(commuteBlock.get_Body());
           arg107=List.ofArray([Tags.Tags().text(routeTitle)]);
           arg106=List.ofArray([Tags.Tags().NewTag("h4",arg107)]);
           arg10b=List.ofArray([Tags.Tags().text("ETA")]);
@@ -42,7 +42,7 @@
           arg108=List.append(List.singleton(Tags.Tags().NewTag("thead",arg109)),arrivalElements);
           arg105=List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg106),List.ofArray([Attr.Attr().NewAttr("class","panel-heading")])),Operators.add(Tags.Tags().NewTag("table",arg108),List.ofArray([Attr.Attr().NewAttr("class","table")]))]);
           arg104=List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg105),List.ofArray([Attr.Attr().NewAttr("class","panel panel-default")]))]);
-          output.AppendI(Operators.add(Tags.Tags().NewTag("div",arg104),List.ofArray([Attr.Attr().NewAttr("class","col-md-6")])));
+          commuteBlock.AppendI(Operators.add(Tags.Tags().NewTag("div",arg104),List.ofArray([Attr.Attr().NewAttr("class","col-md-6")])));
           return Concurrency.Return(null);
          }
         else
@@ -54,12 +54,16 @@
        $:0
       });
      };
-     repeater(null);
-     Operators.OnAfterRender(function()
+     repeater(output);
+     Operators.OnBeforeRender(function()
      {
-      setInterval(repeater,3*1000*1000);
+      setInterval(function()
+      {
+       return repeater(output);
+      },15*1000);
      },output);
-     return output;
+     arg10d=List.ofArray([output]);
+     return Tags.Tags().NewTag("div",arg10d);
     }
    }
   }

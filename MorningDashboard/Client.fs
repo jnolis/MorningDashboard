@@ -32,17 +32,19 @@ module Client =
                             -< [Attr.Class "table"]
                         ] -< [Attr.Class "panel panel-default"]
                     ] -< [Attr.Class "col-md-6"])
-        let repeater () = 
+        let repeater (commuteBlock:Element) = 
             async {
                 let! result = Server.getOneBusAwayBlockData()
                 match result with
                 | Some (routeTitle,arrivalStrings) -> 
-                    updateCommuteBlock output routeTitle arrivalStrings
+                    updateCommuteBlock commuteBlock routeTitle arrivalStrings
                     ()
                 | _ -> ()
                 }
             |> Async.Start
 
-        do repeater()
-        output
-        |>! OnAfterRender (fun output -> JS.SetInterval repeater (3*1000*1000) |> ignore)
+        do repeater output
+        Div [
+            output
+                |>! OnBeforeRender (fun dummy -> JS.SetInterval (fun () -> (repeater output)) (15*1000) |> ignore)
+            ]
