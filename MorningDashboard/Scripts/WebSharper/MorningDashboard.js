@@ -1,85 +1,108 @@
 (function()
 {
- var Global=this,Runtime=this.IntelliFactory.Runtime,Html,Client,Operators,List,T,Tags,Attr,Concurrency,Remoting,AjaxRemotingProvider,setInterval;
+ var Global=this,Runtime=this.IntelliFactory.Runtime,MorningDashboard,Client,Remoting,AjaxRemotingProvider,List,Html,Client1,Tags,Operators,Attr,T,Concurrency,setInterval;
  Runtime.Define(Global,{
   MorningDashboard:{
    Client:{
     commuteBlock:function()
     {
-     var output,arg10,repeater,arg10d;
-     arg10=Runtime.New(T,{
+     return Client.refreshBlock(5,function()
+     {
+      return AjaxRemotingProvider.Async("MorningDashboard:0",[]);
+     },function(block)
+     {
+      return function(result)
+      {
+       var routeTitle,arrivalStrings,arrivalElements,arg103,arg104,arg105,arg106,arg107,arg108,arg109,arg10a,arg10b;
+       routeTitle=result[0];
+       arrivalStrings=result[1];
+       arrivalElements=List.map(function(arrival)
+       {
+        var arg10,arg101,x,arg102,x1;
+        x=arrival[0];
+        arg101=List.ofArray([Tags.Tags().text(x)]);
+        x1=arrival[1];
+        arg102=List.ofArray([Tags.Tags().text(x1)]);
+        arg10=List.ofArray([Tags.Tags().NewTag("td",arg101),Tags.Tags().NewTag("td",arg102)]);
+        return Tags.Tags().NewTag("tr",arg10);
+       },arrivalStrings);
+       block["HtmlProvider@33"].Clear(block.get_Body());
+       arg106=List.ofArray([Tags.Tags().text(routeTitle)]);
+       arg105=List.ofArray([Tags.Tags().NewTag("h4",arg106)]);
+       arg10a=List.ofArray([Tags.Tags().text("ETA")]);
+       arg10b=List.ofArray([Tags.Tags().text("Minutes")]);
+       arg109=List.ofArray([Tags.Tags().NewTag("th",arg10a),Tags.Tags().NewTag("th",arg10b)]);
+       arg108=List.ofArray([Tags.Tags().NewTag("tr",arg109)]);
+       arg107=List.append(List.singleton(Tags.Tags().NewTag("thead",arg108)),arrivalElements);
+       arg104=List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg105),List.ofArray([Attr.Attr().NewAttr("class","panel-heading")])),Operators.add(Tags.Tags().NewTag("table",arg107),List.ofArray([Attr.Attr().NewAttr("class","table")]))]);
+       arg103=List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg104),List.ofArray([Attr.Attr().NewAttr("class","panel panel-default")]))]);
+       return block.AppendI(Operators.add(Tags.Tags().NewTag("div",arg103),List.ofArray([Attr.Attr().NewAttr("class","col-md-6")])));
+      };
+     });
+    },
+    refreshBlock:function(seconds,getDataFunction,updateBlockFunction)
+    {
+     var x,output,repeater,arg10,f;
+     x=Runtime.New(T,{
       $:0
      });
-     output=Operators.add(Tags.Tags().NewTag("div",arg10),List.ofArray([Attr.Attr().NewAttr("id","CommuteOutput")]));
-     repeater=function(commuteBlock)
+     output=Tags.Tags().NewTag("div",x);
+     repeater=function(e)
      {
-      return Concurrency.Start(Concurrency.Delay(function()
+      var arg00;
+      arg00=Concurrency.Delay(function()
       {
-       return Concurrency.Bind(AjaxRemotingProvider.Async("MorningDashboard:0",[]),function(_arg1)
+       return Concurrency.Bind(getDataFunction(null),function(_arg1)
        {
-        var routeTitle,arrivalStrings,arrivalElements,arg104,arg105,arg106,arg107,arg108,arg109,arg10a,arg10b,arg10c;
+        var _,x1;
         if(_arg1.$==1)
          {
-          routeTitle=_arg1.$0[0];
-          arrivalStrings=_arg1.$0[1];
-          arrivalElements=List.map(function(arrival)
-          {
-           var arg101,arg102,x,arg103,x1;
-           x=arrival[0];
-           arg102=List.ofArray([Tags.Tags().text(x)]);
-           x1=arrival[1];
-           arg103=List.ofArray([Tags.Tags().text(x1)]);
-           arg101=List.ofArray([Tags.Tags().NewTag("td",arg102),Tags.Tags().NewTag("td",arg103)]);
-           return Tags.Tags().NewTag("tr",arg101);
-          },arrivalStrings);
-          commuteBlock["HtmlProvider@33"].Clear(commuteBlock.get_Body());
-          arg107=List.ofArray([Tags.Tags().text(routeTitle)]);
-          arg106=List.ofArray([Tags.Tags().NewTag("h4",arg107)]);
-          arg10b=List.ofArray([Tags.Tags().text("ETA")]);
-          arg10c=List.ofArray([Tags.Tags().text("Minutes")]);
-          arg10a=List.ofArray([Tags.Tags().NewTag("th",arg10b),Tags.Tags().NewTag("th",arg10c)]);
-          arg109=List.ofArray([Tags.Tags().NewTag("tr",arg10a)]);
-          arg108=List.append(List.singleton(Tags.Tags().NewTag("thead",arg109)),arrivalElements);
-          arg105=List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg106),List.ofArray([Attr.Attr().NewAttr("class","panel-heading")])),Operators.add(Tags.Tags().NewTag("table",arg108),List.ofArray([Attr.Attr().NewAttr("class","table")]))]);
-          arg104=List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg105),List.ofArray([Attr.Attr().NewAttr("class","panel panel-default")]))]);
-          commuteBlock.AppendI(Operators.add(Tags.Tags().NewTag("div",arg104),List.ofArray([Attr.Attr().NewAttr("class","col-md-6")])));
-          return Concurrency.Return(null);
+          x1=_arg1.$0;
+          (updateBlockFunction(e))(x1);
+          _=Concurrency.Return(null);
          }
         else
          {
-          return Concurrency.Return(null);
+          _=Concurrency.Return(null);
          }
+        return _;
        });
-      }),{
+      });
+      return Concurrency.Start(arg00,{
        $:0
       });
      };
      repeater(output);
-     Operators.OnBeforeRender(function()
+     f=function()
      {
-      setInterval(function()
+      var value;
+      value=setInterval(function()
       {
        return repeater(output);
-      },15*1000);
-     },output);
-     arg10d=List.ofArray([output]);
-     return Tags.Tags().NewTag("div",arg10d);
+      },seconds*1000);
+      return;
+     };
+     Operators.OnBeforeRender(f,output);
+     arg10=List.ofArray([output]);
+     return Tags.Tags().NewTag("div",arg10);
     }
    }
   }
  });
  Runtime.OnInit(function()
  {
-  Html=Runtime.Safe(Global.WebSharper.Html);
-  Client=Runtime.Safe(Html.Client);
-  Operators=Runtime.Safe(Client.Operators);
-  List=Runtime.Safe(Global.WebSharper.List);
-  T=Runtime.Safe(List.T);
-  Tags=Runtime.Safe(Client.Tags);
-  Attr=Runtime.Safe(Client.Attr);
-  Concurrency=Runtime.Safe(Global.WebSharper.Concurrency);
+  MorningDashboard=Runtime.Safe(Global.MorningDashboard);
+  Client=Runtime.Safe(MorningDashboard.Client);
   Remoting=Runtime.Safe(Global.WebSharper.Remoting);
   AjaxRemotingProvider=Runtime.Safe(Remoting.AjaxRemotingProvider);
+  List=Runtime.Safe(Global.WebSharper.List);
+  Html=Runtime.Safe(Global.WebSharper.Html);
+  Client1=Runtime.Safe(Html.Client);
+  Tags=Runtime.Safe(Client1.Tags);
+  Operators=Runtime.Safe(Client1.Operators);
+  Attr=Runtime.Safe(Client1.Attr);
+  T=Runtime.Safe(List.T);
+  Concurrency=Runtime.Safe(Global.WebSharper.Concurrency);
   return setInterval=Runtime.Safe(Global.setInterval);
  });
  Runtime.OnLoad(function()

@@ -7,9 +7,25 @@ open WebSharper.Html.Client
 
 [<JavaScript>]
 module Client =
-    let commuteBlock() = 
-        let output = Div []  -< [Attr.Id "CommuteOutput"]       
-        let updateCommuteBlock (block:Element) (routeTitle:string) (arrivalStrings: (string*string) list) =
+    let refreshBlock (seconds: int) (getDataFunction: unit -> Async<('T option)>) (updateBlockFunction: (Element -> ('T -> unit))) = 
+        let output = Div []      
+        let repeater (e:Element) = 
+            async {
+                let! result = getDataFunction()
+                match result with
+                | Some x -> 
+                    updateBlockFunction e x
+                | _ -> ()
+                }
+            |> Async.Start
+        do repeater output
+        Div [
+            output
+                |>! OnBeforeRender (fun dummy -> JS.SetInterval (fun () -> (repeater output)) (seconds*1000) |> ignore)
+            ]
+    let commuteBlock() =        
+        let updateCommuteBlock (block:Element) (result: string*((string*string) list)) =
+            let (routeTitle,arrivalStrings) = result
             let arrivalElements =
                 arrivalStrings
                 |> List.map (fun arrival ->
@@ -32,19 +48,5 @@ module Client =
                             -< [Attr.Class "table"]
                         ] -< [Attr.Class "panel panel-default"]
                     ] -< [Attr.Class "col-md-6"])
-        let repeater (commuteBlock:Element) = 
-            async {
-                let! result = Server.getOneBusAwayBlockData()
-                match result with
-                | Some (routeTitle,arrivalStrings) -> 
-                    updateCommuteBlock commuteBlock routeTitle arrivalStrings
-                    ()
-                | _ -> ()
-                }
-            |> Async.Start
-
-        do repeater output
-        Div [
-            output
-                |>! OnBeforeRender (fun dummy -> JS.SetInterval (fun () -> (repeater output)) (15*1000) |> ignore)
-            ]
+        let getCommuteData = Server.getOneBusAwayBlockData
+        refreshBlock 5 getCommuteData updateCommuteBlock
