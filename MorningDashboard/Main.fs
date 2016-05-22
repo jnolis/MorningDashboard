@@ -17,7 +17,10 @@ module Site =
 
         let body = [
                     Div[
-                        ClientSide <@ Client.commuteBlock() @>
+                        ClientSide <@ Client.oneBusAwayBlock() @>
+                        ] -< [Attr.Class "container"]
+                    Div[
+                        ClientSide <@ Client.wundergroundBlock() @>
                         ] -< [Attr.Class "container"]
                     ]
         Content.WithTemplate HomePageTemplate body

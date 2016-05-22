@@ -23,15 +23,15 @@ module Client =
             output
                 |>! OnBeforeRender (fun dummy -> JS.SetInterval (fun () -> (repeater output)) (seconds*1000) |> ignore)
             ]
-    let commuteBlock() =        
-        let updateCommuteBlock (block:Element) (result: string*((string*string) list)) =
-            let (routeTitle,arrivalStrings) = result
+    let oneBusAwayBlock() =        
+        let updateCommuteBlock (block:Element) (result: Server.OneBusAway.Response) =
+            let (routeTitle,arrivalStrings) = (result.RouteTitle,result.Arrivals)
             let arrivalElements =
                 arrivalStrings
                 |> List.map (fun arrival ->
                                 TR [
-                                    TD [Text (fst arrival)]
-                                    TD [Text (snd arrival)]
+                                    TD [Text (arrival.Time)]
+                                    TD [Text (arrival.TimeUntil)]
                                 ]
                             )
             block.Clear()
@@ -48,5 +48,35 @@ module Client =
                             -< [Attr.Class "table"]
                         ] -< [Attr.Class "panel panel-default"]
                     ] -< [Attr.Class "col-md-6"])
-        let getCommuteData = Server.getOneBusAwayBlockData
-        refreshBlock 5 getCommuteData updateCommuteBlock
+        let getCommuteData = Server.OneBusAway.getBlockData
+        refreshBlock 15 getCommuteData updateCommuteBlock
+    let wundergroundBlock() =        
+        let updateBlock (block:Element) (result: Server.Wunderground.Response) =
+            let forecastElements =
+                result.Forecast
+                |> List.map (fun forecast ->
+                                TR [
+                                    TD [Text forecast.Time]
+                                    TD [I [Attr.Class ("wi " + forecast.WeatherIcon)]]
+                                    TD [Text (forecast.Temperature + "°")]
+                                ]
+                            )
+            let header = 
+                [
+                H1 [I [Attr.Class ("wi " + result.Current.WeatherIcon)]]
+                H4 [Text (result.Current.Temperature + "°")]
+                ]
+            block.Clear()
+            block.Append 
+                (Div [
+                    Div [
+                        Div header -< [Attr.Class "panel-heading"]
+                        Table
+                            (List.append 
+                                    (List.singleton (THead [ TR [ TH [Text "Hour"]; TH [Text "Weather"]; TH [Text "Temperature"]]]))
+                                    forecastElements)
+                            -< [Attr.Class "table"]
+                        ] -< [Attr.Class "panel panel-default"]
+                    ] -< [Attr.Class "col-md-6"])
+        let getData = Server.Wunderground.getBlockData
+        refreshBlock (60*15) getData updateBlock
