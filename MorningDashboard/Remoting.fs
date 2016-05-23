@@ -11,7 +11,7 @@ module Server =
         type Response = {RouteTitle: string; Arrivals: ResponseArrivals list}
 
         [<Rpc>]
-        let getBlockData() =
+        let getBlockData () =
             async {
                 logCall "OneBusAway"
                 let route = OneBusAway.getRouteInfo "40_100236"
@@ -50,7 +50,7 @@ module Server =
                 logCall "Wunderground"
                 let state = "WA"
                 let city = "Seattle"
-                let maxHours = 24
+                let maxHours = 12
                 let result =
                     match (Wunderground.getCurrentWeather state city, Wunderground.getHourlyForecast maxHours state city) with
                     | (Some current, Some forecasts) ->
@@ -61,6 +61,23 @@ module Server =
                         let currentData =
                             {Temperature = current.Temperature.ToString(); WeatherIcon = current.WeatherIcon}
                         Some {Current = currentData; Forecast = forecastData}
+                    | _ -> None
+                return result
+            }
+
+    module CurrentTime =
+        type Response = {Time: string; Month: string; Day: string; Weekday: string}
+        [<Rpc>]
+        let getBlockData() =
+            async {
+                let result =
+                    match CurrentTime.getCurrentTime() with
+                    | (Some currentTime) ->
+                        let time = currentTime.ToString("HH:mm")
+                        let weekday = currentTime.ToString("dddd")
+                        let month = currentTime.ToString("MMMM")
+                        let day = currentTime.ToString("%d")
+                        Some {Time = time; Month = month; Day = day; Weekday = weekday}
                     | _ -> None
                 return result
             }

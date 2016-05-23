@@ -44,6 +44,7 @@
     <Compile Include="SharedCode.fs" />
     <Compile Include="OneBusAway.fs" />
     <Compile Include="Wunderground.fs" />
+    <Compile Include="CurrentTime.fs" />
     <Compile Include="Remoting.fs" />
     <Compile Include="Client.fs" />
     <Compile Include="Main.fs" />

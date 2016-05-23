@@ -16,10 +16,11 @@ module OneBusAway =
             |> Linq.JObject.Parse
         if string json.["code"] <> "200" then Seq.empty<Arrival>
         else
-            let currentTime = json.["currentTime"]
-                                |> int64
-                                |> System.DateTimeOffset.FromUnixTimeMilliseconds
-                                |> (fun x -> System.TimeZoneInfo.ConvertTime(x,SharedCode.timeZone))
+            let currentTimeReference = json.["currentTime"]
+                                        |> int64
+                                        |> System.DateTimeOffset.FromUnixTimeMilliseconds
+                                        |> (fun x -> System.TimeZoneInfo.ConvertTime(x,System.TimeZoneInfo.Local))
+            let currentTime = System.DateTimeOffset.Now                    
             json
             |> (fun data -> data.["data"].["entry"].["arrivalsAndDepartures"])
             |> Seq.filter (fun arrivalData -> (string arrivalData.["routeId"]) = routeId )
@@ -35,14 +36,16 @@ module OneBusAway =
                             let scheduledDeparture =
                                 scheduledDepartureInt
                                 |> System.DateTimeOffset.FromUnixTimeMilliseconds
-                                |> (fun x -> System.TimeZoneInfo.ConvertTime(x,SharedCode.timeZone))
+                                |> (fun x -> System.TimeZoneInfo.ConvertTime(x,System.TimeZoneInfo.Local))
+                                |> SharedCode.adjustToSystemTime currentTimeReference
                             let predictedDeparture = 
                                 let predictedInt = arrivalData.["predictedDepartureTime"] 
                                                     |> int64 
                                 if predictedInt > 0L && isPredicted then
                                     predictedInt
                                     |> System.DateTimeOffset.FromUnixTimeMilliseconds
-                                    |> (fun x -> System.TimeZoneInfo.ConvertTime(x,SharedCode.timeZone))
+                                    |> (fun x -> System.TimeZoneInfo.ConvertTime(x,System.TimeZoneInfo.Local))
+                                    |> SharedCode.adjustToSystemTime currentTimeReference
                                     |> Some
                                 else None
                             if scheduledDepartureInt = 0L then None else

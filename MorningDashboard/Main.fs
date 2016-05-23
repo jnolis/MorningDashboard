@@ -12,17 +12,14 @@ module Site =
 
     let HomePage =
         let HomePageTemplate =
-              Content.Template<list<Element>>("~/Main.html").With("body", id)
+              Content.Template<Element>("~/Main.html").With("body", id)
 
 
-        let body = [
-                    Div[
+        let body = Div [
                         ClientSide <@ Client.oneBusAwayBlock() @>
-                        ] -< [Attr.Class "container"]
-                    Div[
                         ClientSide <@ Client.wundergroundBlock() @>
-                        ] -< [Attr.Class "container"]
-                    ]
+                        ClientSide <@ Client.currentTimeBlock() @>
+                        ] 
         Content.WithTemplate HomePageTemplate body
 
     [<Website>]

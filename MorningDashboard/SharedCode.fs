@@ -3,7 +3,10 @@
 open Newtonsoft.Json
 
 module SharedCode =
-    let timeZone = System.TimeZoneInfo.Local
+    let adjustToSystemTime (currentReferenceTime: System.DateTimeOffset) (adjustedTime: System.DateTimeOffset) =
+        let now = System.DateTimeOffset.Now
+        let adjustmentSpan = currentReferenceTime - now
+        adjustedTime - adjustmentSpan
     let getUpLocation (levels:int) = 
         let upString =  Seq.replicate levels @"..\"
                         |> Seq.fold (+) @"\"

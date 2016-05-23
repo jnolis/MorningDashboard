@@ -80,3 +80,17 @@ module Client =
                     ] -< [Attr.Class "col-md-6"])
         let getData = Server.Wunderground.getBlockData
         refreshBlock (60*15) getData updateBlock
+    let currentTimeBlock() =        
+        let updateBlock (block:Element) (result: Server.CurrentTime.Response) =
+            block.Clear()
+            block.Append 
+                (Div [
+                    Div [
+                        Div [Text "Time"] -< [Attr.Class "panel-heading"]
+                        H2 [Text result.Time]
+                        H4 [Text result.Weekday]
+                        H4 [Text (result.Month + " " + result.Day)]
+                        ] -< [Attr.Class "panel panel-default"]
+                    ] -< [Attr.Class "col-md-6"])
+        let getData = Server.CurrentTime.getBlockData
+        refreshBlock 5 getData updateBlock

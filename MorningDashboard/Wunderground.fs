@@ -66,7 +66,7 @@ module Wunderground =
                     let time = hourData.["FCTTIME"].["epoch"]
                                 |> int64
                                 |> System.DateTimeOffset.FromUnixTimeSeconds
-                                |> (fun x -> System.TimeZoneInfo.ConvertTime(x,SharedCode.timeZone))
+                                |> (fun x -> System.TimeZoneInfo.ConvertTime(x,System.TimeZoneInfo.Local))
                     let temperature = hourData.["temp"].["english"] |> int
                     let icon =
                         let weatherString = hourData.["icon"] |> string
