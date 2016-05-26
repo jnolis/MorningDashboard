@@ -1,6 +1,6 @@
 (function()
 {
- var Global=this,Runtime=this.IntelliFactory.Runtime,MorningDashboard,Client,Remoting,AjaxRemotingProvider,List,Html,Client1,Tags,Operators,Attr,T,Concurrency,setInterval;
+ var Global=this,Runtime=this.IntelliFactory.Runtime,MorningDashboard,Client,Remoting,AjaxRemotingProvider,List,Html,Client1,Tags,Operators,Attr,Seq,T,Concurrency,setInterval;
  Runtime.Define(Global,{
   MorningDashboard:{
    Client:{
@@ -13,33 +13,34 @@
      {
       return function(result)
       {
-       var x,instanceElements,arg104,arg105,arg106,arg107,x4,arg108,arg109,arg10a,arg10b,arg10c,arg10d;
-       x=result.Instances;
-       instanceElements=List.map(function(instance)
+       var x,x1,calendarElements,arg105,arg106,arg107,arg108;
+       x=result.Calendars;
+       x1=List.map(function(calendar)
        {
-        var arg10,arg101,x1,arg102,x2,arg103,x3;
-        x1=instance.Calendar;
-        arg101=List.ofArray([Tags.Tags().text(x1)]);
-        x2=instance.Event;
-        arg102=List.ofArray([Tags.Tags().text(x2)]);
-        x3=instance.Time;
-        arg103=List.ofArray([Tags.Tags().text(x3)]);
-        arg10=List.ofArray([Tags.Tags().NewTag("td",arg101),Tags.Tags().NewTag("td",arg102),Tags.Tags().NewTag("td",arg103)]);
-        return Tags.Tags().NewTag("tr",arg10);
+        var x2,instanceElements,arg103,arg104,x5;
+        x2=calendar.Instances;
+        instanceElements=List.map(function(instance)
+        {
+         var arg10,arg101,x3,arg102,x4;
+         x3=instance.Event;
+         arg101=List.ofArray([Tags.Tags().text(x3)]);
+         x4=instance.Time;
+         arg102=List.ofArray([Tags.Tags().text(x4)]);
+         arg10=List.ofArray([Tags.Tags().NewTag("td",arg101),Tags.Tags().NewTag("td",arg102)]);
+         return Tags.Tags().NewTag("tr",arg10);
+        },x2);
+        x5=calendar.Name;
+        arg104=List.ofArray([Tags.Tags().text(x5)]);
+        arg103=List.ofArray([Tags.Tags().NewTag("h5",arg104)]);
+        return List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg103),List.ofArray([Attr.Attr().NewAttr("class","panel-body")])),Operators.add(Tags.Tags().NewTag("table",instanceElements),List.ofArray([Attr.Attr().NewAttr("class","table")]))]);
        },x);
+       calendarElements=List.concat(x1);
        block["HtmlProvider@33"].Clear(block.get_Body());
-       x4=result.Title;
-       arg107=List.ofArray([Tags.Tags().text(x4)]);
-       arg106=List.ofArray([Tags.Tags().NewTag("h4",arg107)]);
-       arg10b=List.ofArray([Tags.Tags().text("Calendar")]);
-       arg10c=List.ofArray([Tags.Tags().text("Event")]);
-       arg10d=List.ofArray([Tags.Tags().text("Time")]);
-       arg10a=List.ofArray([Tags.Tags().NewTag("th",arg10b),Tags.Tags().NewTag("th",arg10c),Tags.Tags().NewTag("th",arg10d)]);
-       arg109=List.ofArray([Tags.Tags().NewTag("tr",arg10a)]);
-       arg108=List.append(List.singleton(Tags.Tags().NewTag("thead",arg109)),instanceElements);
-       arg105=List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg106),List.ofArray([Attr.Attr().NewAttr("class","panel-heading")])),Operators.add(Tags.Tags().NewTag("table",arg108),List.ofArray([Attr.Attr().NewAttr("class","table")]))]);
-       arg104=List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg105),List.ofArray([Attr.Attr().NewAttr("class","panel panel-default")]))]);
-       return block.AppendI(Operators.add(Tags.Tags().NewTag("div",arg104),List.ofArray([Attr.Attr().NewAttr("class","col-md-6")])));
+       arg108=List.ofArray([Tags.Tags().text("Daily events")]);
+       arg107=List.ofArray([Tags.Tags().NewTag("h4",arg108)]);
+       arg106=List.append(List.singleton(Operators.add(Tags.Tags().NewTag("div",arg107),List.ofArray([Attr.Attr().NewAttr("class","panel-heading")]))),calendarElements);
+       arg105=List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg106),List.ofArray([Attr.Attr().NewAttr("class","panel panel-default")]))]);
+       return block.AppendI(Operators.add(Tags.Tags().NewTag("div",arg105),List.ofArray([Attr.Attr().NewAttr("class","col-md-6")])));
       };
      });
     },
@@ -50,16 +51,20 @@
      {
       return function(result)
       {
-       var arg10,arg101,arg102,arg103,x,arg104,x1,arg105,x2;
+       var arg10,arg101,arg102,arg103,arg104,arg105,arg106,x,arg107,arg108,x1,arg109,x2;
        block["HtmlProvider@33"].Clear(block.get_Body());
-       arg102=List.ofArray([Tags.Tags().text("Time")]);
+       arg103=List.ofArray([Tags.Tags().text("Time and date")]);
+       arg102=List.ofArray([Tags.Tags().NewTag("h4",arg103)]);
        x=result.Time;
-       arg103=List.ofArray([Tags.Tags().text(x)]);
+       arg106=List.ofArray([Tags.Tags().text(x)]);
+       arg105=List.ofArray([Tags.Tags().NewTag("h1",arg106)]);
        x1=result.Weekday;
-       arg104=List.ofArray([Tags.Tags().text(x1)]);
+       arg108=List.ofArray([Tags.Tags().text(x1)]);
        x2=result.Month+" "+result.Day;
-       arg105=List.ofArray([Tags.Tags().text(x2)]);
-       arg101=List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg102),List.ofArray([Attr.Attr().NewAttr("class","panel-heading")])),Tags.Tags().NewTag("h2",arg103),Tags.Tags().NewTag("h4",arg104),Tags.Tags().NewTag("h4",arg105)]);
+       arg109=List.ofArray([Tags.Tags().text(x2)]);
+       arg107=List.ofArray([Tags.Tags().NewTag("h4",arg108),Tags.Tags().NewTag("h4",arg109)]);
+       arg104=List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg105),List.ofArray([Attr.Attr().NewAttr("class","col-md-6")])),Operators.add(Tags.Tags().NewTag("div",arg107),List.ofArray([Attr.Attr().NewAttr("class","col-md-6")]))]);
+       arg101=List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg102),List.ofArray([Attr.Attr().NewAttr("class","panel-heading")])),Operators.add(Tags.Tags().NewTag("div",arg104),List.ofArray([Attr.Attr().NewAttr("class","panel-body")]))]);
        arg10=List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg101),List.ofArray([Attr.Attr().NewAttr("class","panel panel-default")]))]);
        return block.AppendI(Operators.add(Tags.Tags().NewTag("div",arg10),List.ofArray([Attr.Attr().NewAttr("class","col-md-6")])));
       };
@@ -75,34 +80,48 @@
      var updateCommuteBlock,getCommuteData;
      updateCommuteBlock=function(block)
      {
-      return function(result)
+      return function(resultCommutes)
       {
-       var patternInput,routeTitle,arrivalStrings,mapping,arrivalElements,arg103,arg104,arg105,arg106,arg107,arg108,arg109,arg10a,arg10b;
-       patternInput=[result.RouteTitle,result.Arrivals];
-       routeTitle=patternInput[0];
-       arrivalStrings=patternInput[1];
-       mapping=function(arrival)
+       var mapping,lists,resultBlocks,arg107,arg108,arg109,arg10a;
+       mapping=function(result)
        {
-        var arg10,arg101,x,arg102,x1;
-        x=arrival.Time;
-        arg101=List.ofArray([Tags.Tags().text(x)]);
-        x1=arrival.TimeUntil;
-        arg102=List.ofArray([Tags.Tags().text(x1)]);
-        arg10=List.ofArray([Tags.Tags().NewTag("td",arg101),Tags.Tags().NewTag("td",arg102)]);
-        return Tags.Tags().NewTag("tr",arg10);
+        var patternInput,routeTitle,arrivalStrings,mapping1,arrivalElements,arg103,arg104,_,arg105,arg106;
+        patternInput=[result.RouteTitle,result.Arrivals];
+        routeTitle=patternInput[0];
+        arrivalStrings=patternInput[1];
+        mapping1=function(arrival)
+        {
+         var arg10,arg101,x,arg102,x1;
+         x=arrival.Time;
+         arg101=List.ofArray([Tags.Tags().text(x)]);
+         x1=arrival.TimeUntil;
+         arg102=List.ofArray([Tags.Tags().text(x1)]);
+         arg10=List.ofArray([Tags.Tags().NewTag("td",arg101),Tags.Tags().NewTag("td",arg102)]);
+         return Tags.Tags().NewTag("tr",arg10);
+        };
+        arrivalElements=List.map(mapping1,arrivalStrings);
+        arg104=List.ofArray([Tags.Tags().text(routeTitle)]);
+        arg103=List.ofArray([Tags.Tags().NewTag("h5",arg104)]);
+        if(Seq.length(arrivalStrings)>0)
+         {
+          _=Operators.add(Tags.Tags().NewTag("table",arrivalElements),List.ofArray([Attr.Attr().NewAttr("class","table")]));
+         }
+        else
+         {
+          arg106=List.ofArray([Tags.Tags().text("No upcoming arrivals")]);
+          arg105=List.ofArray([Operators.add(Tags.Tags().NewTag("li",arg106),List.ofArray([Attr.Attr().NewAttr("class","list-group-item")]))]);
+          _=Operators.add(Tags.Tags().NewTag("ul",arg105),List.ofArray([Attr.Attr().NewAttr("class","list-group")]));
+         }
+        return List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg103),List.ofArray([Attr.Attr().NewAttr("class","panel-body")])),_]);
        };
-       arrivalElements=List.map(mapping,arrivalStrings);
+       lists=List.map(mapping,resultCommutes);
+       resultBlocks=List.concat(lists);
        block["HtmlProvider@33"].Clear(block.get_Body());
-       arg106=List.ofArray([Tags.Tags().text(routeTitle)]);
-       arg105=List.ofArray([Tags.Tags().NewTag("h4",arg106)]);
-       arg10a=List.ofArray([Tags.Tags().text("ETA")]);
-       arg10b=List.ofArray([Tags.Tags().text("Minutes")]);
-       arg109=List.ofArray([Tags.Tags().NewTag("th",arg10a),Tags.Tags().NewTag("th",arg10b)]);
-       arg108=List.ofArray([Tags.Tags().NewTag("tr",arg109)]);
-       arg107=List.append(List.singleton(Tags.Tags().NewTag("thead",arg108)),arrivalElements);
-       arg104=List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg105),List.ofArray([Attr.Attr().NewAttr("class","panel-heading")])),Operators.add(Tags.Tags().NewTag("table",arg107),List.ofArray([Attr.Attr().NewAttr("class","table")]))]);
-       arg103=List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg104),List.ofArray([Attr.Attr().NewAttr("class","panel panel-default")]))]);
-       return block.AppendI(Operators.add(Tags.Tags().NewTag("div",arg103),List.ofArray([Attr.Attr().NewAttr("class","col-md-6")])));
+       arg10a=List.ofArray([Tags.Tags().text("Commute")]);
+       arg109=List.ofArray([Tags.Tags().NewTag("h4",arg10a)]);
+       arg108=List.append(List.singleton(Operators.add(Tags.Tags().NewTag("div",arg109),List.ofArray([Attr.Attr().NewAttr("class","panel-heading")]))),resultBlocks);
+       arg107=List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg108),List.ofArray([Attr.Attr().NewAttr("class","panel panel-default")]))]);
+       return block.AppendI(Operators.add(Tags.Tags().NewTag("div",arg107),List.ofArray([Attr.Attr().NewAttr("class","col-md-6")])));
       };
      };
      getCommuteData=function()
@@ -164,7 +183,7 @@
      {
       return function(result)
       {
-       var x,mapping,forecastElements,header,arg106,arg107,arg108,arg109,x3,arg10a,arg10b,arg10c,arg10d,arg10e,arg10f,arg1010,arg1011;
+       var x,mapping,forecastElements,body,arg106,arg107,arg108,arg109,arg10a,arg10b,x3,arg10c,arg10d,arg10e,arg10f;
        x=result.Forecast;
        mapping=function(forecast)
        {
@@ -180,22 +199,20 @@
         return Tags.Tags().NewTag("tr",arg10);
        };
        forecastElements=List.map(mapping,x);
-       arg108="wi "+result.Current.WeatherIcon;
-       arg107=List.ofArray([Attr.Attr().NewAttr("class",arg108)]);
-       arg106=List.ofArray([Tags.Tags().NewTag("i",arg107)]);
+       arg109="wi "+result.Current.WeatherIcon;
+       arg108=List.ofArray([Attr.Attr().NewAttr("class",arg109)]);
+       arg107=List.ofArray([Tags.Tags().NewTag("i",arg108)]);
+       arg106=List.ofArray([Tags.Tags().NewTag("h1",arg107)]);
        x3=result.Current.Temperature+"°";
-       arg109=List.ofArray([Tags.Tags().text(x3)]);
-       header=List.ofArray([Tags.Tags().NewTag("h1",arg106),Tags.Tags().NewTag("h4",arg109)]);
+       arg10b=List.ofArray([Tags.Tags().text(x3)]);
+       arg10a=List.ofArray([Tags.Tags().NewTag("h4",arg10b)]);
+       body=List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg106),List.ofArray([Attr.Attr().NewAttr("class","col-md-6")])),Operators.add(Tags.Tags().NewTag("div",arg10a),List.ofArray([Attr.Attr().NewAttr("class","col-md-6")]))]);
        block["HtmlProvider@33"].Clear(block.get_Body());
-       arg10f=List.ofArray([Tags.Tags().text("Hour")]);
-       arg1010=List.ofArray([Tags.Tags().text("Weather")]);
-       arg1011=List.ofArray([Tags.Tags().text("Temperature")]);
-       arg10e=List.ofArray([Tags.Tags().NewTag("th",arg10f),Tags.Tags().NewTag("th",arg1010),Tags.Tags().NewTag("th",arg1011)]);
-       arg10d=List.ofArray([Tags.Tags().NewTag("tr",arg10e)]);
-       arg10c=List.append(List.singleton(Tags.Tags().NewTag("thead",arg10d)),forecastElements);
-       arg10b=List.ofArray([Operators.add(Tags.Tags().NewTag("div",header),List.ofArray([Attr.Attr().NewAttr("class","panel-heading")])),Operators.add(Tags.Tags().NewTag("table",arg10c),List.ofArray([Attr.Attr().NewAttr("class","table")]))]);
-       arg10a=List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg10b),List.ofArray([Attr.Attr().NewAttr("class","panel panel-default")]))]);
-       return block.AppendI(Operators.add(Tags.Tags().NewTag("div",arg10a),List.ofArray([Attr.Attr().NewAttr("class","col-md-6")])));
+       arg10f=List.ofArray([Tags.Tags().text("Weather")]);
+       arg10e=List.ofArray([Tags.Tags().NewTag("h4",arg10f)]);
+       arg10d=List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg10e),List.ofArray([Attr.Attr().NewAttr("class","panel-heading")])),Operators.add(Tags.Tags().NewTag("div",body),List.ofArray([Attr.Attr().NewAttr("class","panel-body")])),Operators.add(Tags.Tags().NewTag("table",forecastElements),List.ofArray([Attr.Attr().NewAttr("class","table")]))]);
+       arg10c=List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg10d),List.ofArray([Attr.Attr().NewAttr("class","panel panel-default")]))]);
+       return block.AppendI(Operators.add(Tags.Tags().NewTag("div",arg10c),List.ofArray([Attr.Attr().NewAttr("class","col-md-6")])));
       };
      };
      getData=function()
@@ -219,6 +236,7 @@
   Tags=Runtime.Safe(Client1.Tags);
   Operators=Runtime.Safe(Client1.Operators);
   Attr=Runtime.Safe(Client1.Attr);
+  Seq=Runtime.Safe(Global.WebSharper.Seq);
   T=Runtime.Safe(List.T);
   Concurrency=Runtime.Safe(Global.WebSharper.Concurrency);
   return setInterval=Runtime.Safe(Global.setInterval);

@@ -24,29 +24,36 @@ module Client =
                 |>! OnBeforeRender (fun dummy -> JS.SetInterval (fun () -> (repeater output)) (seconds*1000) |> ignore)
             ]
     let oneBusAwayBlock() =        
-        let updateCommuteBlock (block:Element) (result: Server.OneBusAway.Response) =
-            let (routeTitle,arrivalStrings) = (result.RouteTitle,result.Arrivals)
-            let arrivalElements =
-                arrivalStrings
-                |> List.map (fun arrival ->
-                                TR [
-                                    TD [Text (arrival.Time)]
-                                    TD [Text (arrival.TimeUntil)]
-                                ]
-                            )
-            block.Clear()
+        let updateCommuteBlock (block:Element) (resultCommutes: Server.OneBusAway.Response list) =
+            let resultBlocks =
+                resultCommutes
+                |> List.map( fun result ->
+                    let (routeTitle,arrivalStrings) = (result.RouteTitle,result.Arrivals)
+                    let arrivalElements =
+                        arrivalStrings
+                        |> List.map (fun arrival ->
+                                        TR [
+                                            TD [Text (arrival.Time)]
+                                            TD [Text (arrival.TimeUntil)]
+                                        ]
+                                    )
+                    [
+                        Div [H5 [Text routeTitle]] -< [Attr.Class "panel-body"];
+                        (if List.length arrivalStrings > 0 then
+                            Table arrivalElements -< [Attr.Class "table"]
+                        else UL [LI [Text "No upcoming arrivals"] -< [Attr.Class "list-group-item"]] -< [Attr.Class "list-group"])
+                    ]
+                    
+                        )
+                |> List.concat
+
+            do block.Clear()
             block.Append 
                 (Div [
-                    Div [
-                        Div [
-                                H4 [Text routeTitle ]
-                            ] -< [Attr.Class "panel-heading"]
-                        Table
-                            (List.append 
-                                    (List.singleton (THead [ TR [ TH [Text "ETA"]; TH [Text "Minutes"]]]))
-                                    arrivalElements)
-                            -< [Attr.Class "table"]
-                        ] -< [Attr.Class "panel panel-default"]
+                    Div (List.append
+                            (List.singleton (Div [H4 [Text "Commute" ]] -< [Attr.Class "panel-heading"]))
+                            resultBlocks)
+                         -< [Attr.Class "panel panel-default"]
                     ] -< [Attr.Class "col-md-6"])
         let getCommuteData = Server.OneBusAway.getBlockData
         refreshBlock 15 getCommuteData updateCommuteBlock
@@ -61,20 +68,18 @@ module Client =
                                     TD [Text (forecast.Temperature + "°")]
                                 ]
                             )
-            let header = 
+            let body = 
                 [
-                H1 [I [Attr.Class ("wi " + result.Current.WeatherIcon)]]
-                H4 [Text (result.Current.Temperature + "°")]
+                Div [H1 [I [Attr.Class ("wi " + result.Current.WeatherIcon)]]] -< [Attr.Class "col-md-6"]
+                Div [H4 [Text (result.Current.Temperature + "°")]] -< [Attr.Class "col-md-6"]
                 ]
             block.Clear()
             block.Append 
                 (Div [
                     Div [
-                        Div header -< [Attr.Class "panel-heading"]
-                        Table
-                            (List.append 
-                                    (List.singleton (THead [ TR [ TH [Text "Hour"]; TH [Text "Weather"]; TH [Text "Temperature"]]]))
-                                    forecastElements)
+                        Div [H4 [Text "Weather"]] -< [Attr.Class "panel-heading"]
+                        Div body -< [Attr.Class "panel-body"]
+                        Table forecastElements
                             -< [Attr.Class "table"]
                         ] -< [Attr.Class "panel panel-default"]
                     ] -< [Attr.Class "col-md-6"])
@@ -87,10 +92,12 @@ module Client =
             block.Append 
                 (Div [
                     Div [
-                        Div [Text "Time"] -< [Attr.Class "panel-heading"]
-                        H2 [Text result.Time]
-                        H4 [Text result.Weekday]
-                        H4 [Text (result.Month + " " + result.Day)]
+                        Div [H4 [Text "Time and date"]] -< [Attr.Class "panel-heading"]
+                        Div[
+                            Div [H1 [Text result.Time]] -< [Attr.Class "col-md-6"]
+                            Div [   H4 [Text result.Weekday]
+                                    H4 [Text (result.Month + " " + result.Day)]] -< [Attr.Class "col-md-6"]
+                                    ]-< [Attr.Class "panel-body"]
                         ] -< [Attr.Class "panel panel-default"]
                     ] -< [Attr.Class "col-md-6"])
         let getData = Server.CurrentTime.getBlockData
@@ -98,28 +105,32 @@ module Client =
 
     let calendarBlock() =        
         let updateBlock (block:Element) (result: Server.Calendar.Response) =
-            let instanceElements =
-                result.Instances
-                |> List.map (fun instance ->
-                                TR [
-                                    TD [Text (instance.Calendar)]
-                                    TD [Text (instance.Event)]
-                                    TD [Text (instance.Time)]
-                                ]
-                            )
+            let calendarElements =
+                result.Calendars
+                |> List.map(fun calendar ->
+                        let instanceElements = 
+                            calendar.Instances
+                            |> List.map (fun instance ->
+                                            TR [
+                                                TD [Text (instance.Event)]
+                                                TD [Text (instance.Time)]
+                                            ]
+                                        )
+                        [
+                            Div [H5 [Text calendar.Name]] -< [Attr.Class "panel-body"];
+                            Table instanceElements
+                                -< [Attr.Class "table"]
+                        ]
+                    )
+                |> List.concat
             block.Clear()
             block.Append 
-                (Div [
-                    Div [
-                        Div [
-                                H4 [Text result.Title ]
-                            ] -< [Attr.Class "panel-heading"]
-                        Table
-                            (List.append 
-                                    (List.singleton (THead [ TR [ TH [Text "Calendar"]; TH [Text "Event"]; TH [Text "Time"]]]))
-                                    instanceElements)
-                            -< [Attr.Class "table"]
-                        ] -< [Attr.Class "panel panel-default"]
+                (Div [ 
+                    Div
+                        (List.append
+                            (List.singleton(Div [H4 [Text "Daily events" ]] -< [Attr.Class "panel-heading"]))
+                            calendarElements)
+                         -< [Attr.Class "panel panel-default"]
                     ] -< [Attr.Class "col-md-6"])
         let getData = Server.Calendar.getBlockData
         refreshBlock (15*60) getData updateBlock

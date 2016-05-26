@@ -16,8 +16,8 @@ module Calendar =
         IsAllDay: EWSoftware.PDI.Objects.VEvent -> bool
         }
 
-    type Instance = {CalendarName: string; EventName: string; StartTime: System.DateTimeOffset; EndTime: System.DateTimeOffset; BusyStatus: BusyStatus; IsAllDay: bool}
-    type Calendar = {StartRange: System.DateTimeOffset; EndRange: System.DateTimeOffset; Instances: Instance seq}
+    type Instance = {Name: string; StartTime: System.DateTimeOffset; EndTime: System.DateTimeOffset; BusyStatus: BusyStatus; IsAllDay: bool}
+    type Calendar = {Name: string; StartRange: System.DateTimeOffset; EndRange: System.DateTimeOffset; Instances: Instance seq}
 
     let getCustomFunctions (t: CalendarType) =
         let outlookFunctions = 
@@ -74,28 +74,20 @@ module Calendar =
             |> Seq.map (fun instance -> 
                             let startTime = System.DateTimeOffset instance.StartDateTime
                             let endTime = System.DateTimeOffset instance.EndDateTime
-                            {CalendarName = calendarName; EventName= eventName; StartTime = startTime; EndTime = endTime; BusyStatus = busyStatus; IsAllDay = isAllDay}
+                            {Name= eventName; StartTime = startTime; EndTime = endTime; BusyStatus = busyStatus; IsAllDay = isAllDay}
                             )
+            |> Seq.filter (fun instance -> instance.StartTime < endDate && instance.EndTime > startDate)
             )
         |> Seq.concat
-        |> Seq.sortBy (fun instance -> (instance.StartTime, instance.EventName))
+        |> Seq.sortBy (fun instance -> (instance.StartTime, instance.Name))
 
     let getCalendar (startRange: System.DateTimeOffset) (endRange: System.DateTimeOffset) (calendarInfo) =
         let (calendarName,calendarUrl,calendarType) = calendarInfo
         let customFunctions = getCustomFunctions calendarType
         let rawCalendar = getRawCalendar calendarUrl
         let instances = getInstancesInRange customFunctions calendarName rawCalendar startRange endRange
-        {Instances = instances; StartRange = startRange; EndRange = endRange}
+        {Name = calendarName; Instances = instances; StartRange = startRange; EndRange = endRange}
         
-    let getAllCalendars (keyFile:string) (startRange: System.DateTimeOffset) (endRange: System.DateTimeOffset) =
-        let calendars = 
-            getCalendarInfo keyFile
+    let getAllCalendars (startRange: System.DateTimeOffset) (endRange: System.DateTimeOffset) =
+        getCalendarInfo (SharedCode.getKeyFile ())
             |> Seq.map (getCalendar startRange endRange)
-        let mergedInstances =
-            calendars
-            |> Seq.map (fun calendar -> calendar.Instances)
-            |> Seq.concat
-            |> Seq.sortBy (fun instance -> (instance.StartTime,instance.EventName,instance.CalendarName))
-        {Instances = mergedInstances; StartRange = startRange; EndRange = endRange}
-
-        
