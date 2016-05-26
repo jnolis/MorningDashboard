@@ -26,9 +26,13 @@ module SharedCode =
         keyFile
         |> System.IO.File.ReadAllText
         |> Linq.JObject.Parse
-        |> (fun x -> x.[keyName])
-        |> string
+        |> (fun x -> x.["Keys"])
+        |> Seq.filter (fun key -> (string key.["Name"]) = keyName)
+        |> Seq.head
+        |> (fun key -> string key.["Key"])
+
+    let getKeyFile () =
+        System.IO.Path.GetFullPath (projectLocation() + @"\Keys.json")
 
     let getKeyFromProject (keyName:string) =
-        let keyFile = System.IO.Path.GetFullPath (projectLocation() + @"\Keys.json")
-        getKey keyFile keyName
+        getKey (getKeyFile ()) keyName

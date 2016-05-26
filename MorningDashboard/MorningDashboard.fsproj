@@ -44,6 +44,7 @@
     <Compile Include="SharedCode.fs" />
     <Compile Include="OneBusAway.fs" />
     <Compile Include="Wunderground.fs" />
+    <Compile Include="Calendar.fs" />
     <Compile Include="CurrentTime.fs" />
     <Compile Include="Remoting.fs" />
     <Compile Include="Client.fs" />
@@ -61,6 +62,14 @@
     </ItemGroup>
   </Target>
   <ItemGroup>
+    <Reference Include="EWSoftware.PDI">
+      <HintPath>..\packages\EWSoftware.PDI.2015.1.19.0\lib\net40\EWSoftware.PDI.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="EWSoftware.PDI.Data">
+      <HintPath>..\packages\EWSoftware.PDI.Data.2015.1.19.0\lib\net40\EWSoftware.PDI.Data.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="IntelliFactory.Xml">
       <HintPath>..\packages\IntelliFactory.Xml.0.6.63.95\lib\net40\IntelliFactory.Xml.dll</HintPath>
       <Private>True</Private>
@@ -74,6 +83,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Data" />
     <Reference Include="System.Data.DataSetExtensions.dll" />
     <Reference Include="System.Numerics" />
     <Reference Include="System.Web" />

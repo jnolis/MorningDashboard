@@ -19,6 +19,7 @@ module Site =
                         ClientSide <@ Client.oneBusAwayBlock() @>
                         ClientSide <@ Client.wundergroundBlock() @>
                         ClientSide <@ Client.currentTimeBlock() @>
+                        ClientSide <@ Client.calendarBlock() @>
                         ] 
         Content.WithTemplate HomePageTemplate body
 

@@ -4,6 +4,7 @@ open WebSharper
 open WebSharper.Sitelets
 
 module Server =
+    let timeFormat = "HH:mm"
     let logCall (name:string) =
         System.Diagnostics.Debug.Write ("Server recieved " + name + " call at " + System.DateTime.Now.ToString() + "\n")
     module OneBusAway =
@@ -31,7 +32,7 @@ module Server =
                                                                     | None -> (arrival.Scheduled,false)
                                     let timeUntilArrivalString = (showTime - arrival.Current).Minutes.ToString()
                                     let timeString = 
-                                        let raw = showTime.ToString("HH:mm") 
+                                        let raw = showTime.ToString(timeFormat) 
                                         if isPredicted then raw
                                         else raw + "*"
                                     {Time = timeString;TimeUntil = timeUntilArrivalString}
@@ -57,7 +58,7 @@ module Server =
                         let forecastData = 
                             forecasts
                             |> Seq.toList
-                            |> List.map (fun forecast -> {Time =forecast.Time.ToString("HH:mm"); Temperature = forecast.Temperature.ToString(); WeatherIcon = forecast.WeatherIcon})
+                            |> List.map (fun forecast -> {Time =forecast.Time.ToString(timeFormat); Temperature = forecast.Temperature.ToString(); WeatherIcon = forecast.WeatherIcon})
                         let currentData =
                             {Temperature = current.Temperature.ToString(); WeatherIcon = current.WeatherIcon}
                         Some {Current = currentData; Forecast = forecastData}
@@ -73,11 +74,49 @@ module Server =
                 let result =
                     match CurrentTime.getCurrentTime() with
                     | (Some currentTime) ->
-                        let time = currentTime.ToString("HH:mm")
+                        let time = currentTime.ToString(timeFormat)
                         let weekday = currentTime.ToString("dddd")
                         let month = currentTime.ToString("MMMM")
                         let day = currentTime.ToString("%d")
                         Some {Time = time; Month = month; Day = day; Weekday = weekday}
                     | _ -> None
+                return result
+            }
+
+    module Calendar =
+        type Instance = {Calendar: string; Time: string ; Event: string}
+        type Response = {Title: string; Instances: Instance list}
+        let generateTimeAndDuration (instance:Calendar.Instance)=
+            if instance.IsAllDay then "All day"
+            else
+                let span = instance.EndTime - instance.StartTime
+                let duration =
+                    if span.TotalDays >= 1.0 then
+                        span.TotalDays.ToString("n2") + " days"
+                    else if span.TotalHours >= 1.0 then
+                        span.TotalHours.ToString("n2") + " hours"
+                    else 
+                        span.TotalMinutes.ToString("n2") + " minutes"
+                instance.StartTime.ToString(timeFormat) + " (" + duration + ")"
+        [<Rpc>]
+        let getBlockData() =
+            async {
+                logCall "Calendar"
+                let result = 
+                    try
+                        let startRange = System.DateTimeOffset.Now.Date |> System.DateTimeOffset
+                        let endRange = System.DateTimeOffset.Now.Date.AddDays(1.0) |> System.DateTimeOffset
+                        let title = "Agenda for " + startRange.Date.ToString("MMMM d")
+                        let instances =
+                            (Calendar.getAllCalendars (SharedCode.getKeyFile()) startRange endRange).Instances
+                            |> Seq.map (fun instance -> 
+                                let calendar = instance.CalendarName
+                                let event = instance.EventName
+                                let timeAndDuration = generateTimeAndDuration instance
+                                {Calendar = calendar; Event = event; Time = timeAndDuration})
+                            |> Seq.toList
+                        Some {Title = title; Instances = instances}
+                    with | _ -> None
+                    
                 return result
             }

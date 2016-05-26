@@ -80,6 +80,7 @@ module Client =
                     ] -< [Attr.Class "col-md-6"])
         let getData = Server.Wunderground.getBlockData
         refreshBlock (60*15) getData updateBlock
+
     let currentTimeBlock() =        
         let updateBlock (block:Element) (result: Server.CurrentTime.Response) =
             block.Clear()
@@ -94,3 +95,31 @@ module Client =
                     ] -< [Attr.Class "col-md-6"])
         let getData = Server.CurrentTime.getBlockData
         refreshBlock 5 getData updateBlock
+
+    let calendarBlock() =        
+        let updateBlock (block:Element) (result: Server.Calendar.Response) =
+            let instanceElements =
+                result.Instances
+                |> List.map (fun instance ->
+                                TR [
+                                    TD [Text (instance.Calendar)]
+                                    TD [Text (instance.Event)]
+                                    TD [Text (instance.Time)]
+                                ]
+                            )
+            block.Clear()
+            block.Append 
+                (Div [
+                    Div [
+                        Div [
+                                H4 [Text result.Title ]
+                            ] -< [Attr.Class "panel-heading"]
+                        Table
+                            (List.append 
+                                    (List.singleton (THead [ TR [ TH [Text "Calendar"]; TH [Text "Event"]; TH [Text "Time"]]]))
+                                    instanceElements)
+                            -< [Attr.Class "table"]
+                        ] -< [Attr.Class "panel panel-default"]
+                    ] -< [Attr.Class "col-md-6"])
+        let getData = Server.Calendar.getBlockData
+        refreshBlock (15*60) getData updateBlock
