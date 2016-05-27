@@ -3,6 +3,22 @@
 open Newtonsoft.Json
 
 module SharedCode =
+    let makeNewCache<'Key,'Data when 'Key: equality > () =
+        new System.Collections.Generic.Dictionary<'Key,System.DateTimeOffset*'Data>()
+    let getFromCache  (cache: System.Collections.Generic.Dictionary<'I,System.DateTimeOffset*'O>) (secondsUntilOutdated: float) (map: 'I -> 'O option) (input: 'I) =
+        if cache.ContainsKey input then
+            let (cacheTime,cacheValue) = cache.Item input
+            if cacheTime.AddSeconds(secondsUntilOutdated) <= System.DateTimeOffset.Now then
+                let newValue = map input
+                do cache.Remove input |> ignore
+                if newValue.IsSome then do cache.Add(input,(System.DateTimeOffset.Now,newValue.Value))
+                newValue
+            else Some cacheValue
+        else
+            let newValue = map input
+            if newValue.IsSome then do cache.Add(input,(System.DateTimeOffset.Now,newValue.Value))
+            newValue
+
     let adjustToSystemTime (currentReferenceTime: System.DateTimeOffset) (adjustedTime: System.DateTimeOffset) =
         let now = System.DateTimeOffset.Now
         let adjustmentSpan = currentReferenceTime - now

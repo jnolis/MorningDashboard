@@ -57,7 +57,7 @@
        arg102=List.ofArray([Tags.Tags().NewTag("h4",arg103)]);
        x=result.Time;
        arg106=List.ofArray([Tags.Tags().text(x)]);
-       arg105=List.ofArray([Tags.Tags().NewTag("h1",arg106)]);
+       arg105=List.ofArray([Operators.add(Tags.Tags().NewTag("h1",arg106),List.ofArray([Attr.Attr().NewAttr("class","highlight")]))]);
        x1=result.Weekday;
        arg108=List.ofArray([Tags.Tags().text(x1)]);
        x2=result.Month+" "+result.Day;
@@ -128,7 +128,7 @@
      {
       return AjaxRemotingProvider.Async("MorningDashboard:3",[]);
      };
-     return Client.refreshBlock(15,getCommuteData,updateCommuteBlock);
+     return Client.refreshBlock(5,getCommuteData,updateCommuteBlock);
     },
     refreshBlock:function(seconds,getDataFunction,updateBlockFunction)
     {
@@ -183,7 +183,7 @@
      {
       return function(result)
       {
-       var x,mapping,forecastElements,body,arg106,arg107,arg108,arg109,arg10a,arg10b,x3,arg10c,arg10d,arg10e,arg10f;
+       var x,mapping,forecastElements,body,arg106,arg107,arg108,arg109,arg10a,arg10b,x3,arg10c,x4,arg10d,x5,arg10e,arg10f,arg1010,arg1011;
        x=result.Forecast;
        mapping=function(forecast)
        {
@@ -199,20 +199,24 @@
         return Tags.Tags().NewTag("tr",arg10);
        };
        forecastElements=List.map(mapping,x);
-       arg109="wi "+result.Current.WeatherIcon;
+       arg109="weather wi "+result.Current.WeatherIcon;
        arg108=List.ofArray([Attr.Attr().NewAttr("class",arg109)]);
        arg107=List.ofArray([Tags.Tags().NewTag("i",arg108)]);
-       arg106=List.ofArray([Tags.Tags().NewTag("h1",arg107)]);
-       x3=result.Current.Temperature+"°";
+       arg106=List.ofArray([Operators.add(Tags.Tags().NewTag("h1",arg107),List.ofArray([Attr.Attr().NewAttr("class","highlight")]))]);
+       x3="Current: "+result.Current.Temperature+"°";
        arg10b=List.ofArray([Tags.Tags().text(x3)]);
-       arg10a=List.ofArray([Tags.Tags().NewTag("h4",arg10b)]);
+       x4="High: "+result.Current.High+"°";
+       arg10c=List.ofArray([Tags.Tags().text(x4)]);
+       x5="Low: "+result.Current.Low+"°";
+       arg10d=List.ofArray([Tags.Tags().text(x5)]);
+       arg10a=List.ofArray([Tags.Tags().NewTag("h4",arg10b),Tags.Tags().NewTag("h4",arg10c),Tags.Tags().NewTag("h4",arg10d)]);
        body=List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg106),List.ofArray([Attr.Attr().NewAttr("class","col-md-6")])),Operators.add(Tags.Tags().NewTag("div",arg10a),List.ofArray([Attr.Attr().NewAttr("class","col-md-6")]))]);
        block["HtmlProvider@33"].Clear(block.get_Body());
-       arg10f=List.ofArray([Tags.Tags().text("Weather")]);
-       arg10e=List.ofArray([Tags.Tags().NewTag("h4",arg10f)]);
-       arg10d=List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg10e),List.ofArray([Attr.Attr().NewAttr("class","panel-heading")])),Operators.add(Tags.Tags().NewTag("div",body),List.ofArray([Attr.Attr().NewAttr("class","panel-body")])),Operators.add(Tags.Tags().NewTag("table",forecastElements),List.ofArray([Attr.Attr().NewAttr("class","table")]))]);
-       arg10c=List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg10d),List.ofArray([Attr.Attr().NewAttr("class","panel panel-default")]))]);
-       return block.AppendI(Operators.add(Tags.Tags().NewTag("div",arg10c),List.ofArray([Attr.Attr().NewAttr("class","col-md-6")])));
+       arg1011=List.ofArray([Tags.Tags().text("Weather")]);
+       arg1010=List.ofArray([Tags.Tags().NewTag("h4",arg1011)]);
+       arg10f=List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg1010),List.ofArray([Attr.Attr().NewAttr("class","panel-heading")])),Operators.add(Tags.Tags().NewTag("div",body),List.ofArray([Attr.Attr().NewAttr("class","panel-body")])),Operators.add(Tags.Tags().NewTag("table",forecastElements),List.ofArray([Attr.Attr().NewAttr("class","table table-condensed")]))]);
+       arg10e=List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg10f),List.ofArray([Attr.Attr().NewAttr("class","panel panel-default")]))]);
+       return block.AppendI(Operators.add(Tags.Tags().NewTag("div",arg10e),List.ofArray([Attr.Attr().NewAttr("class","col-md-6")])));
       };
      };
      getData=function()

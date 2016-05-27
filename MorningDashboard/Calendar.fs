@@ -16,8 +16,12 @@ module Calendar =
         IsAllDay: EWSoftware.PDI.Objects.VEvent -> bool
         }
 
+    type CalendarInfo = {Name: string; Url: string; Type: CalendarType}
     type Instance = {Name: string; StartTime: System.DateTimeOffset; EndTime: System.DateTimeOffset; BusyStatus: BusyStatus; IsAllDay: bool}
     type Calendar = {Name: string; StartRange: System.DateTimeOffset; EndRange: System.DateTimeOffset; Instances: Instance seq}
+
+    let calendarCache = SharedCode.makeNewCache<CalendarInfo*System.DateTimeOffset*System.DateTimeOffset,Calendar>()
+
 
     let getCustomFunctions (t: CalendarType) =
         let outlookFunctions = 
@@ -55,7 +59,7 @@ module Calendar =
         |> System.IO.File.ReadAllText
         |> Linq.JObject.Parse
         |> (fun x -> x.["Calendars"])
-        |> Seq.map (fun calendar -> (string calendar.["Name"], string calendar.["Url"], getType (string calendar.["Type"])))
+        |> Seq.map (fun calendar -> {Name = string calendar.["Name"]; Url = string calendar.["Url"]; Type = getType (string calendar.["Type"])})
 
     let getRawCalendar (calendarUrl: string) =
         let parser = new EWSoftware.PDI.Parser.VCalendarParser()
@@ -81,13 +85,21 @@ module Calendar =
         |> Seq.concat
         |> Seq.sortBy (fun instance -> (instance.StartTime, instance.Name))
 
-    let getCalendar (startRange: System.DateTimeOffset) (endRange: System.DateTimeOffset) (calendarInfo) =
-        let (calendarName,calendarUrl,calendarType) = calendarInfo
-        let customFunctions = getCustomFunctions calendarType
-        let rawCalendar = getRawCalendar calendarUrl
-        let instances = getInstancesInRange customFunctions calendarName rawCalendar startRange endRange
-        {Name = calendarName; Instances = instances; StartRange = startRange; EndRange = endRange}
+    let getCalendar (startRange: System.DateTimeOffset) (endRange: System.DateTimeOffset) (calendarInfo:CalendarInfo) =
+        try
+            let customFunctions = getCustomFunctions calendarInfo.Type
+            let rawCalendar = getRawCalendar calendarInfo.Url
+            let instances = getInstancesInRange customFunctions calendarInfo.Name rawCalendar startRange endRange
+            Some {Name = calendarInfo.Name; Instances = instances; StartRange = startRange; EndRange = endRange}
+        with | _ -> None
+
+    let getCalendarWithCache (startRange: System.DateTimeOffset) (endRange: System.DateTimeOffset) (calendarInfo) =
+        SharedCode.getFromCache calendarCache (15.0*60.0-5.0) (fun (i,s,e) -> getCalendar s e i) (calendarInfo,startRange,endRange)
         
     let getAllCalendars (startRange: System.DateTimeOffset) (endRange: System.DateTimeOffset) =
         getCalendarInfo (SharedCode.getKeyFile ())
             |> Seq.map (getCalendar startRange endRange)
+
+    let getAllCalendarsWithCache (startRange: System.DateTimeOffset) (endRange: System.DateTimeOffset) =
+        getCalendarInfo (SharedCode.getKeyFile ())
+            |> Seq.map (getCalendarWithCache startRange endRange)

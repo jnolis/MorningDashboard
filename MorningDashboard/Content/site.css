@@ -1,0 +1,19 @@
+.weather {
+  font-size: 130%;
+}
+
+highlight, .highlight {
+  font-size: 56px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  font-family: "Michroma", sans-serif;
+  font-weight: 500;
+  line-height: 1.1;
+  color: #ffffff;
+}
+
+body {
+  margin-top: 10px;
+}

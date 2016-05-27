@@ -20,12 +20,12 @@ module Server =
                         let routesStopsAndArrivals =
                             seq [("40_100236","1_13460");("40_100236","1_71335")]
                             |> Seq.map (fun (routeId, stopId) -> 
-                                            let route = OneBusAway.getRouteInfo routeId
-                                            let stop = OneBusAway.getStopInfo stopId
+                                            let route = OneBusAway.getRouteInfoWithCache routeId
+                                            let stop = OneBusAway.getStopInfoWithCache stopId
                                             (route,stop))
                             |> Seq.choose (fun rs -> match rs with | (Some r, Some s) -> Some (r,s) | _ -> None)
                             |> Seq.map (fun (route,stop) -> 
-                                            let arrivals = OneBusAway.getArrivalsForStopAndRoute stop.Id route.Id
+                                            let arrivals = OneBusAway.getArrivalsForStopAndRouteWithCache stop.Id route.Id
                                             (route,stop,arrivals))
 
                         let result =
@@ -52,7 +52,7 @@ module Server =
             }
     module Wunderground =
         type Forecast = {Time: string; Temperature: string; WeatherIcon: string}
-        type Current = {Temperature: string; WeatherIcon: string}
+        type Current = {Temperature: string; WeatherIcon: string; Low: string; High: string}
         type Response = {Current: Current; Forecast: Forecast list}
         [<Rpc>]
         let getBlockData() =
@@ -62,14 +62,22 @@ module Server =
                 let city = "Seattle"
                 let maxHours = 12
                 let result =
-                    match (Wunderground.getCurrentWeather state city, Wunderground.getHourlyForecast maxHours state city) with
-                    | (Some current, Some forecasts) ->
+                    match (Wunderground.getCurrentWeatherWithCache state city, Wunderground.getHourlyForecastWithCache state city, Wunderground.getDailyForecastWithCache state city) with
+                    | (Some current, Some forecasts, Some daily) ->
                         let forecastData = 
-                            forecasts
+                            if Seq.length forecasts > maxHours then Seq.take maxHours forecasts else forecasts
                             |> Seq.toList
                             |> List.map (fun forecast -> {Time =forecast.Time.ToString(timeFormat); Temperature = forecast.Temperature.ToString(); WeatherIcon = forecast.WeatherIcon})
+                        let (dailyLow,dailyHigh) =
+                            let today = 
+                                daily
+                                |> Seq.filter (fun day -> day.Time.Date = System.DateTime.Today)
+                                |> (fun today -> if Seq.length today > 0 then Seq.head today |> Some else None)
+                            match today with
+                            | Some t -> (t.Low.ToString(),t.High.ToString())
+                            | None -> ("","")
                         let currentData =
-                            {Temperature = current.Temperature.ToString(); WeatherIcon = current.WeatherIcon}
+                            {Temperature = current.Temperature.ToString(); WeatherIcon = current.WeatherIcon; Low = dailyLow; High = dailyHigh}
                         Some {Current = currentData; Forecast = forecastData}
                     | _ -> None
                 return result
@@ -117,17 +125,15 @@ module Server =
                         let startRange = System.DateTimeOffset.Now.Date |> System.DateTimeOffset
                         let endRange = System.DateTimeOffset.Now.Date.AddDays(1.0) |> System.DateTimeOffset
                         let calendars = 
-                            Calendar.getAllCalendars startRange endRange
-                            |> Seq.map (fun calendar ->
-                                let instances = 
-                                        calendar.Instances
-                                        |> Seq.map (fun instance -> {Event = instance.Name; Time = generateTimeAndDuration instance})
-                                        |> Seq.toList
-                                {Name= calendar.Name; Instances = instances}
-
-                                )
+                            Calendar.getAllCalendarsWithCache startRange endRange
+                            |> Seq.choose (
+                                    Option.map (fun calendar ->
+                                    let instances = 
+                                            calendar.Instances
+                                            |> Seq.map (fun instance -> {Event = instance.Name; Time = generateTimeAndDuration instance})
+                                            |> Seq.toList
+                                    {Name= calendar.Name; Instances = instances}))
                             |> Seq.toList
-
                         Some {Calendars = calendars}
                     with | _ -> None
                     

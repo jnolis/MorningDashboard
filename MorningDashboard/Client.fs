@@ -56,7 +56,7 @@ module Client =
                          -< [Attr.Class "panel panel-default"]
                     ] -< [Attr.Class "col-md-6"])
         let getCommuteData = Server.OneBusAway.getBlockData
-        refreshBlock 15 getCommuteData updateCommuteBlock
+        refreshBlock 5 getCommuteData updateCommuteBlock
     let wundergroundBlock() =        
         let updateBlock (block:Element) (result: Server.Wunderground.Response) =
             let forecastElements =
@@ -70,8 +70,10 @@ module Client =
                             )
             let body = 
                 [
-                Div [H1 [I [Attr.Class ("wi " + result.Current.WeatherIcon)]]] -< [Attr.Class "col-md-6"]
-                Div [H4 [Text (result.Current.Temperature + "°")]] -< [Attr.Class "col-md-6"]
+                Div [H1 [I [Attr.Class ("weather wi " + result.Current.WeatherIcon)]] -< [Attr.Class "highlight"]] -< [Attr.Class "col-md-6"]
+                Div [   H4 [Text ("Current: " + result.Current.Temperature + "°")]
+                        H4 [Text ("High: " + result.Current.High+ "°")]
+                        H4 [Text ("Low: " + result.Current.Low+ "°")]] -< [Attr.Class "col-md-6"]
                 ]
             block.Clear()
             block.Append 
@@ -80,7 +82,7 @@ module Client =
                         Div [H4 [Text "Weather"]] -< [Attr.Class "panel-heading"]
                         Div body -< [Attr.Class "panel-body"]
                         Table forecastElements
-                            -< [Attr.Class "table"]
+                            -< [Attr.Class "table table-condensed"]
                         ] -< [Attr.Class "panel panel-default"]
                     ] -< [Attr.Class "col-md-6"])
         let getData = Server.Wunderground.getBlockData
@@ -94,7 +96,7 @@ module Client =
                     Div [
                         Div [H4 [Text "Time and date"]] -< [Attr.Class "panel-heading"]
                         Div[
-                            Div [H1 [Text result.Time]] -< [Attr.Class "col-md-6"]
+                            Div [H1 [Text result.Time] -< [Attr.Class "highlight"]] -< [Attr.Class "col-md-6"]
                             Div [   H4 [Text result.Weekday]
                                     H4 [Text (result.Month + " " + result.Day)]] -< [Attr.Class "col-md-6"]
                                     ]-< [Attr.Class "panel-body"]
