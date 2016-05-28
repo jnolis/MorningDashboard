@@ -139,3 +139,42 @@ module Server =
                     
                 return result
             }
+
+    module Twitter =
+        type SimpleTweet = {Username: string; Text: string}
+        type Response = {Title: string; Tweets: SimpleTweet list}
+        let screenNames = Seq.singleton "skyetetra"
+        let formatter (s:string seq) =
+            match Seq.length s with
+            | 0 -> ""
+            | 1 -> Seq.head s
+            | 2 -> (Seq.head s) + " and " + (Seq.last s)
+            | _ ->
+                let last = Seq.last s
+                let secondToLast = Seq.item (Seq.length s - 2) s
+                let first = Seq.head s
+                let rest = s |> Seq.mapi (fun id str -> (id,str)) |> Seq.filter (fun (id,str) -> id <> 0 && id < (Seq.length s - 2)) |> Seq.map snd
+                Seq.fold (fun current next -> current + ", " + next) first (Seq.append rest (Seq.singleton (secondToLast + ", and " + last)))
+        let maxTweets = 10
+        [<Rpc>]
+        let getBlockData() =
+            async {
+                logCall "Twitter"
+                let result =
+                    try
+                        let resultTweets =
+                            screenNames
+                            |> Seq.map (fun screenName -> async {return Twitter.getTweetsFromFriendsOfUser screenName})
+                            |> Async.Parallel
+                            |> Async.RunSynchronously
+                            |> Seq.concat
+                            |> Seq.distinct
+                            |> Seq.sortByDescending (fun tweet -> tweet.CreatedAt)
+                            |> Seq.map (fun tweet -> {Username = tweet.CreatedBy.ScreenName; Text = tweet.Text})
+                            |> SharedCode.seqTopN maxTweets
+                            |> Seq.toList
+                        let title = formatter screenNames
+                        Some {Title = title; Tweets = resultTweets}
+                    with | _ -> None
+                return result
+            }

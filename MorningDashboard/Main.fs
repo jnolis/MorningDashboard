@@ -20,6 +20,7 @@ module Site =
                         ClientSide <@ Client.wundergroundBlock() @>
                         ClientSide <@ Client.currentTimeBlock() @>
                         ClientSide <@ Client.calendarBlock() @>
+                        ClientSide <@ Client.twitterBlock() @>
                         ] 
         Content.WithTemplate HomePageTemplate body
 

@@ -3,6 +3,10 @@
 open Newtonsoft.Json
 
 module SharedCode =
+    let seqTopN (n:int) (s: 'T seq) =
+        if Seq.length s > n then Seq.take n s
+        else s
+
     let makeNewCache<'Key,'Data when 'Key: equality > () =
         new System.Collections.Generic.Dictionary<'Key,System.DateTimeOffset*'Data>()
     let getFromCache  (cache: System.Collections.Generic.Dictionary<'I,System.DateTimeOffset*'O>) (secondsUntilOutdated: float) (map: 'I -> 'O option) (input: 'I) =
