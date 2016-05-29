@@ -4,7 +4,7 @@ open WebSharper
 open WebSharper.Sitelets
 
 module Server =
-    let timeFormat = "HH:mm"
+    let timeFormat = "h:mm tt"
     let logCall (name:string) =
         System.Diagnostics.Debug.Write ("Server recieved " + name + " call at " + System.DateTime.Now.ToString() + "\n")
     module OneBusAway =
