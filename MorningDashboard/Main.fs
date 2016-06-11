@@ -21,7 +21,8 @@ module Site =
                         ClientSide <@ Client.currentTimeBlock() @>
                         ClientSide <@ Client.calendarBlock() @>
                         ClientSide <@ Client.twitterBlock() @>
-                        ] 
+                        ClientSide <@ Client.trafficMapBlock() @>
+                        ] -< [Attr.Id "bodyTemplate"]
         Content.WithTemplate HomePageTemplate body
 
     [<Website>]

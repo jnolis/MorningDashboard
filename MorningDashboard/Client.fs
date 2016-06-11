@@ -9,8 +9,8 @@ open WebSharper.Html.Client
 module Client =
     let emptyTable (message: string) = Table [TR [TD [Text (message)]]] -< [Attr.Class "table"]
 
-    let refreshBlock (seconds: int) (getDataFunction: unit -> Async<('T option)>) (updateBlockFunction: (Element -> ('T -> unit))) = 
-        let output = Div []      
+    let refreshBlock (id: string) (seconds: int) (getDataFunction: unit -> Async<('T option)>) (updateBlockFunction: (Element -> ('T -> unit))) = 
+        let output = Div [Attr.Id id]     
         let repeater (e:Element) = 
             async {
                 let! result = getDataFunction()
@@ -21,10 +21,8 @@ module Client =
                 }
             |> Async.Start
         do repeater output
-        Div [
-            output
-                |>! OnBeforeRender (fun dummy -> JS.SetInterval (fun () -> (repeater output)) (seconds*1000) |> ignore)
-            ]
+        output |>! OnBeforeRender (fun dummy -> JS.SetInterval (fun () -> (repeater output)) (seconds*1000) |> ignore)
+
     let oneBusAwayBlock() =        
         let updateCommuteBlock (block:Element) (resultCommutes: Server.OneBusAway.Response list) =
             let resultBlocks =
@@ -58,7 +56,7 @@ module Client =
                          -< [Attr.Class "panel panel-default"]
                     ] -< [Attr.Class "col-md-3"])
         let getCommuteData = Server.OneBusAway.getBlockData
-        refreshBlock 5 getCommuteData updateCommuteBlock
+        refreshBlock "oneBusAwayBlock" 5 getCommuteData updateCommuteBlock
     let wundergroundBlock() =        
         let updateBlock (block:Element) (result: Server.Wunderground.Response) =
             let forecastElements =
@@ -88,7 +86,7 @@ module Client =
                         ] -< [Attr.Class "panel panel-default"]
                     ] -< [Attr.Class "col-md-4"])
         let getData = Server.Wunderground.getBlockData
-        refreshBlock (60*15) getData updateBlock
+        refreshBlock "wundergroundBlock" (60*15) getData updateBlock
 
     let currentTimeBlock() =        
         let updateBlock (block:Element) (result: Server.CurrentTime.Response) =
@@ -105,7 +103,7 @@ module Client =
                         ] -< [Attr.Class "panel panel-default"]
                     ] -< [Attr.Class "col-md-5"])
         let getData = Server.CurrentTime.getBlockData
-        refreshBlock 5 getData updateBlock
+        refreshBlock "currentTimeBlock" 5 getData updateBlock
 
     let calendarBlock() =        
         let updateBlock (block:Element) (result: Server.Calendar.Response) =
@@ -138,7 +136,7 @@ module Client =
                          -< [Attr.Class "panel panel-default"]
                     ] -< [Attr.Class "col-md-5"])
         let getData = Server.Calendar.getBlockData
-        refreshBlock (15*60) getData updateBlock
+        refreshBlock "calendarBlock" (15*60) getData updateBlock
 
     let twitterBlock() =        
         let updateBlock (block:Element) (result: Server.Twitter.Response) =
@@ -165,4 +163,18 @@ module Client =
                          -< [Attr.Class "panel panel-default"]
                     ] -< [Attr.Class "col-md-5"])
         let getData = Server.Twitter.getBlockData
-        refreshBlock (10) getData updateBlock
+        refreshBlock "twitterBlock" (10) getData updateBlock
+
+    let trafficMapBlock() =
+        let googleMapsScript = Script [Attr.Src "https://maps.googleapis.com/maps/api/js?key=AIzaSyAC3mJ7zFtO-um7HYSBVPNP2zGYv7x3urU"]
+        let initializeMapsScript = Script [ Attr.Src "Scripts/TrafficMap.js"]
+        Div [
+            Div [
+                Div [
+                    Div [H4 [Text "Traffic"]] -< [Attr.Class "panel-heading"]
+                    Div [Attr.Id "trafficMap"; Attr.Class "map"]
+                ] -< [Attr.Class "panel panel-default"]
+            ] -< [Attr.Class "col-md-5"]
+            |>! Operators.OnBeforeRender (JS.Window?createMap("trafficMap"))
+        ] -< [Attr.Id "trafficMapBlock"]
+            

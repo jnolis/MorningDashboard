@@ -1,6 +1,6 @@
 (function()
 {
- var Global=this,Runtime=this.IntelliFactory.Runtime,List,Html,Client,Tags,Operators,Attr,Seq,MorningDashboard,Client1,Remoting,AjaxRemotingProvider,T,Concurrency,setInterval;
+ var Global=this,Runtime=this.IntelliFactory.Runtime,List,Html,Client,Tags,Operators,Attr,Seq,MorningDashboard,Client1,Remoting,AjaxRemotingProvider,Concurrency,setInterval,window;
  Runtime.Define(Global,{
   MorningDashboard:{
    Client:{
@@ -47,7 +47,7 @@
      {
       return AjaxRemotingProvider.Async("MorningDashboard:1",[]);
      };
-     return Client1.refreshBlock(15*60,getData,updateBlock);
+     return Client1.refreshBlock("calendarBlock",15*60,getData,updateBlock);
     },
     currentTimeBlock:function()
     {
@@ -78,7 +78,7 @@
      {
       return AjaxRemotingProvider.Async("MorningDashboard:2",[]);
      };
-     return Client1.refreshBlock(5,getData,updateBlock);
+     return Client1.refreshBlock("currentTimeBlock",5,getData,updateBlock);
     },
     emptyTable:function(message)
     {
@@ -131,14 +131,12 @@
      {
       return AjaxRemotingProvider.Async("MorningDashboard:4",[]);
      };
-     return Client1.refreshBlock(5,getCommuteData,updateCommuteBlock);
+     return Client1.refreshBlock("oneBusAwayBlock",5,getCommuteData,updateCommuteBlock);
     },
-    refreshBlock:function(seconds,getDataFunction,updateBlockFunction)
+    refreshBlock:function(id,seconds,getDataFunction,updateBlockFunction)
     {
-     var x,output,repeater,arg10,f;
-     x=Runtime.New(T,{
-      $:0
-     });
+     var x,output,repeater,f;
+     x=List.ofArray([Attr.Attr().NewAttr("id",id)]);
      output=Tags.Tags().NewTag("div",x);
      repeater=function(e)
      {
@@ -176,28 +174,43 @@
       return;
      };
      Operators.OnBeforeRender(f,output);
-     arg10=List.ofArray([output]);
-     return Tags.Tags().NewTag("div",arg10);
+     return output;
+    },
+    trafficMapBlock:function()
+    {
+     var x,googleMapsScript,x1,initializeMapsScript,arg10,x2,arg101,arg102,arg103,arg104,arg105;
+     x=List.ofArray([Attr.Attr().NewAttr("src","https://maps.googleapis.com/maps/api/js?key=AIzaSyAC3mJ7zFtO-um7HYSBVPNP2zGYv7x3urU")]);
+     googleMapsScript=Tags.Tags().NewTag("script",x);
+     x1=List.ofArray([Attr.Attr().NewAttr("src","Scripts/TrafficMap.js")]);
+     initializeMapsScript=Tags.Tags().NewTag("script",x1);
+     arg104=List.ofArray([Tags.Tags().text("Traffic")]);
+     arg103=List.ofArray([Tags.Tags().NewTag("h4",arg104)]);
+     arg105=List.ofArray([Attr.Attr().NewAttr("id","trafficMap"),Attr.Attr().NewAttr("class","map")]);
+     arg102=List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg103),List.ofArray([Attr.Attr().NewAttr("class","panel-heading")])),Tags.Tags().NewTag("div",arg105)]);
+     arg101=List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg102),List.ofArray([Attr.Attr().NewAttr("class","panel panel-default")]))]);
+     x2=Operators.add(Tags.Tags().NewTag("div",arg101),List.ofArray([Attr.Attr().NewAttr("class","col-md-5")]));
+     Operators.OnBeforeRender(window.createMap.call(null,"trafficMap"),x2);
+     arg10=List.ofArray([x2]);
+     return Operators.add(Tags.Tags().NewTag("div",arg10),List.ofArray([Attr.Attr().NewAttr("id","trafficMapBlock")]));
     },
     twitterBlock:function()
     {
-     return Client1.refreshBlock(10,function()
-     {
-      return AjaxRemotingProvider.Async("MorningDashboard:0",[]);
-     },function(block)
+     var updateBlock,getData;
+     updateBlock=function(block)
      {
       return function(result)
       {
-       var x,tweetElements,tweetElements1,arg102,arg103,x2,arg104,arg105,arg106,arg107;
+       var x,mapping,tweetElements,tweetElements1,arg102,arg103,x2,arg104,arg105,arg106,arg107;
        x=result.Tweets;
-       tweetElements=List.map(function(tweet)
+       mapping=function(tweet)
        {
         var arg10,arg101,x1;
         x1=tweet.Username+": "+tweet.Text;
         arg101=List.ofArray([Tags.Tags().text(x1)]);
         arg10=List.ofArray([Tags.Tags().NewTag("td",arg101)]);
         return Tags.Tags().NewTag("tr",arg10);
-       },x);
+       };
+       tweetElements=List.map(mapping,x);
        x2=result.Title;
        arg103=List.ofArray([Tags.Tags().text(x2)]);
        arg102=List.ofArray([Tags.Tags().NewTag("h5",arg103)]);
@@ -209,7 +222,12 @@
        arg104=List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg105),List.ofArray([Attr.Attr().NewAttr("class","panel panel-default")]))]);
        return block.AppendI(Operators.add(Tags.Tags().NewTag("div",arg104),List.ofArray([Attr.Attr().NewAttr("class","col-md-5")])));
       };
-     });
+     };
+     getData=function()
+     {
+      return AjaxRemotingProvider.Async("MorningDashboard:0",[]);
+     };
+     return Client1.refreshBlock("twitterBlock",10,getData,updateBlock);
     },
     wundergroundBlock:function()
     {
@@ -258,7 +276,7 @@
      {
       return AjaxRemotingProvider.Async("MorningDashboard:3",[]);
      };
-     return Client1.refreshBlock(60*15,getData,updateBlock);
+     return Client1.refreshBlock("wundergroundBlock",60*15,getData,updateBlock);
     }
    }
   }
@@ -276,9 +294,9 @@
   Client1=Runtime.Safe(MorningDashboard.Client);
   Remoting=Runtime.Safe(Global.WebSharper.Remoting);
   AjaxRemotingProvider=Runtime.Safe(Remoting.AjaxRemotingProvider);
-  T=Runtime.Safe(List.T);
   Concurrency=Runtime.Safe(Global.WebSharper.Concurrency);
-  return setInterval=Runtime.Safe(Global.setInterval);
+  setInterval=Runtime.Safe(Global.setInterval);
+  return window=Runtime.Safe(Global.window);
  });
  Runtime.OnLoad(function()
  {

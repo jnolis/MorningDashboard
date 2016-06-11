@@ -17,3 +17,9 @@ highlight, .highlight {
 body {
   margin-top: 10px;
 }
+
+.map {
+height: 400px;
+width: 100%;
+filter: invert(100%);
+}
