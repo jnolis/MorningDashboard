@@ -6,15 +6,23 @@ module OneBusAway =
     let apiKey = SharedCode.getKeyFromProject "OneBusAway"
 
     
+    type Commute = {Name: string; StopId: string; RouteIds: string seq}
     type Arrival = {Current: System.DateTimeOffset; Scheduled: System.DateTimeOffset; Predicted: System.DateTimeOffset option}
     type Route = {Id: string; LongName: string; ShortName: string; Description: string}
     type Stop = {Id: string; Name: string; Direction: string}
     
     let routeCache =SharedCode.makeNewCache<string,Route>()
     let stopCache = SharedCode.makeNewCache<string,Stop>()
-    let arrivalCache = SharedCode.makeNewCache<string*string,Arrival seq>()
+    let arrivalCache = SharedCode.makeNewCache<string*(string seq),Arrival seq>()
 
-    let getArrivalsForStopAndRoute (stopId:string) (routeId:string) =
+    let getCommutes () =
+        SharedCode.getKeyFile()
+        |> System.IO.File.ReadAllText
+        |> Linq.JObject.Parse
+        |> (fun x -> x.["Commutes"])
+        |> Seq.map (fun x -> 
+                    {Name= string x.["Name"];StopId = string x.["StopId"];RouteIds = Seq.map string x.["RouteIds"]})
+    let getArrivalsForStopAndRoutes (stopId:string) (routeIds:string seq) =
         let json =
             @"http://api.pugetsound.onebusaway.org/api/where/arrivals-and-departures-for-stop/"+stopId+".json?key="+apiKey
             |> ((new System.Net.WebClient()).DownloadString)
@@ -28,7 +36,7 @@ module OneBusAway =
             let currentTime = System.DateTimeOffset.Now                    
             json
             |> (fun data -> data.["data"].["entry"].["arrivalsAndDepartures"])
-            |> Seq.filter (fun arrivalData -> (string arrivalData.["routeId"]) = routeId )
+            |> Seq.filter (fun arrivalData -> Seq.exists (fun r -> r = (string arrivalData.["routeId"])) routeIds )
             |> Seq.choose (fun arrivalData -> 
                             let isPredicted = 
                                 match string arrivalData.["predicted"] with
@@ -57,8 +65,8 @@ module OneBusAway =
                                     Some {Current = currentTime; Scheduled= scheduledDeparture; Predicted = predictedDeparture}
                                     )
         
-    let getArrivalsForStopAndRouteWithCache stopId routeId =
-        let arrivals = SharedCode.getFromCache arrivalCache (14.5) (fun (s,r) -> getArrivalsForStopAndRoute s r |> Some) (stopId, routeId)
+    let getArrivalsForStopAndRoutesWithCache stopId routeId =
+        let arrivals = SharedCode.getFromCache arrivalCache (14.5) (fun (s,r) -> getArrivalsForStopAndRoutes s r |> Some) (stopId, routeId)
         match arrivals with
         | Some a -> a
         | None -> Seq.empty<Arrival>

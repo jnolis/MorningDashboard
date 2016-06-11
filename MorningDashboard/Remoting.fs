@@ -18,20 +18,24 @@ module Server =
                     try
                         logCall "OneBusAway"
                         let routesStopsAndArrivals =
-                            seq [("40_100236","1_13460");("40_100236","1_71335")]
-                            |> Seq.map (fun (routeId, stopId) -> 
-                                            let route = OneBusAway.getRouteInfoWithCache routeId
-                                            let stop = OneBusAway.getStopInfoWithCache stopId
-                                            (route,stop))
-                            |> Seq.choose (fun rs -> match rs with | (Some r, Some s) -> Some (r,s) | _ -> None)
-                            |> Seq.map (fun (route,stop) -> 
-                                            let arrivals = OneBusAway.getArrivalsForStopAndRouteWithCache stop.Id route.Id
-                                            (route,stop,arrivals))
+                            OneBusAway.getCommutes()
+                            |> Seq.map (fun commute -> 
+                                            let routes = Seq.map OneBusAway.getRouteInfoWithCache commute.RouteIds
+                                            let stop = OneBusAway.getStopInfoWithCache commute.StopId
+                                            (commute,routes,stop))
+                            |> Seq.choose (fun crs -> match crs with 
+                                                        | (c,r, Some s) -> 
+                                                            if Seq.exists Option.isNone r then None 
+                                                            else Some (c,Seq.map Option.get r,s) 
+                                                        | _ -> None)
+                            |> Seq.map (fun (commute,routes,stop) -> 
+                                            let arrivals = OneBusAway.getArrivalsForStopAndRoutesWithCache stop.Id (Seq.map (fun (x:OneBusAway.Route)-> x.Id) routes)
+                                            (commute,routes,stop,arrivals))
 
                         let result =
                             routesStopsAndArrivals
-                            |> Seq.map (fun (r, s, a) ->
-                                        let routeTitle = s.Name + " [" + s.Direction + "] " + r.ShortName + ": " + r.LongName
+                            |> Seq.map (fun (commute, r, s, a) ->
+                                        let routeTitle = commute.Name
                                         let arrivalStrings =
                                             let arrivalToString (arrival:OneBusAway.Arrival) =
                                                 let (showTime, isPredicted) = match arrival.Predicted with
