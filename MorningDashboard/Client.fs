@@ -9,8 +9,8 @@ open WebSharper.Html.Client
 module Client =
     let emptyTable (message: string) = Table [TR [TD [Text (message)]]] -< [Attr.Class "table"]
 
-    let refreshBlock (id: string) (seconds: int) (getDataFunction: unit -> Async<('T option)>) (updateBlockFunction: (Element -> ('T -> unit))) = 
-        let output = Div [Attr.Id id]     
+    let refreshBlock (id: string) (seconds: int) (initialContents: Element List) (getDataFunction: unit -> Async<('T option)>) (updateBlockFunction: (Element -> ('T -> unit))) = 
+        let output = Div initialContents -< [Attr.Id id]     
         let repeater (e:Element) = 
             async {
                 let! result = getDataFunction()
@@ -56,7 +56,7 @@ module Client =
                          -< [Attr.Class "panel panel-default"]
                     ] -< [Attr.Class "col-md-3"])
         let getCommuteData = Server.OneBusAway.getBlockData
-        refreshBlock "oneBusAwayBlock" 5 getCommuteData updateCommuteBlock
+        refreshBlock "oneBusAwayBlock" 5 List.empty<Element> getCommuteData updateCommuteBlock
     let wundergroundBlock() =        
         let updateBlock (block:Element) (result: Server.Wunderground.Response) =
             let forecastElements =
@@ -86,7 +86,7 @@ module Client =
                         ] -< [Attr.Class "panel panel-default"]
                     ] -< [Attr.Class "col-md-4"])
         let getData = Server.Wunderground.getBlockData
-        refreshBlock "wundergroundBlock" (60*15) getData updateBlock
+        refreshBlock "wundergroundBlock" (60*15) List.empty<Element> getData updateBlock
 
     let currentTimeBlock() =        
         let updateBlock (block:Element) (result: Server.CurrentTime.Response) =
@@ -103,7 +103,7 @@ module Client =
                         ] -< [Attr.Class "panel panel-default"]
                     ] -< [Attr.Class "col-md-5"])
         let getData = Server.CurrentTime.getBlockData
-        refreshBlock "currentTimeBlock" 5 getData updateBlock
+        refreshBlock "currentTimeBlock" 5 List.empty<Element> getData updateBlock
 
     let calendarBlock() =        
         let updateBlock (block:Element) (result: Server.Calendar.Response) =
@@ -136,7 +136,7 @@ module Client =
                          -< [Attr.Class "panel panel-default"]
                     ] -< [Attr.Class "col-md-5"])
         let getData = Server.Calendar.getBlockData
-        refreshBlock "calendarBlock" (15*60) getData updateBlock
+        refreshBlock "calendarBlock" (15*60) List.empty<Element> getData updateBlock
 
     let twitterBlock() =        
         let updateBlock (block:Element) (result: Server.Twitter.Response) =
@@ -163,18 +163,20 @@ module Client =
                          -< [Attr.Class "panel panel-default"]
                     ] -< [Attr.Class "col-md-5"])
         let getData = Server.Twitter.getBlockData
-        refreshBlock "twitterBlock" (10) getData updateBlock
+        refreshBlock "twitterBlock" (10) List.empty<Element> getData updateBlock
 
     let trafficMapBlock() =
-        let googleMapsScript = Script [Attr.Src "https://maps.googleapis.com/maps/api/js?key=AIzaSyAC3mJ7zFtO-um7HYSBVPNP2zGYv7x3urU"]
-        let initializeMapsScript = Script [ Attr.Src "Scripts/TrafficMap.js"]
-        Div [
-            Div [
+        let getData () =
+            async {return Some ()} 
+        let initialElements = 
+            [
                 Div [
-                    Div [H4 [Text "Traffic"]] -< [Attr.Class "panel-heading"]
-                    Div [Attr.Id "trafficMap"; Attr.Class "map"]
-                ] -< [Attr.Class "panel panel-default"]
-            ] -< [Attr.Class "col-md-5"]
-            |>! Operators.OnBeforeRender (JS.Window?createMap("trafficMap"))
-        ] -< [Attr.Id "trafficMapBlock"]
-            
+                    Div [
+                        Div [H4 [Text "Traffic"]] -< [Attr.Class "panel-heading"]
+                        Div [Attr.Id "trafficMap"; Attr.Class "map"]
+                    ] -< [Attr.Class "panel panel-default"]
+                ] -< [Attr.Class "col-md-5"]
+            ]
+        let updateBlock (block:Element) (result: unit) =
+            do WebSharper.JQuery.JQuery.Of("trafficMap").Ready(JS.Window?createMap("trafficMap")).Ignore
+        refreshBlock "trafficMapBlock" (10*60) initialElements getData updateBlock
