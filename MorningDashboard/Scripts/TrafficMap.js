@@ -3,7 +3,7 @@ function createMap(mapId) {
     var trafficLayer;
     map = new google.maps.Map(document.getElementById(mapId), {
         center: { lat: 47.616313, lng: -122.301881 },
-        zoom: 12,
+        zoom: 11,
         disableDefaultUI: true,
         draggable: false,
         scrollwheel: false,

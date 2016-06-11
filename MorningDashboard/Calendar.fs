@@ -96,10 +96,3 @@ module Calendar =
     let getCalendarWithCache (startRange: System.DateTimeOffset) (endRange: System.DateTimeOffset) (calendarInfo) =
         SharedCode.getFromCache calendarCache (15.0*60.0-5.0) (fun (i,s,e) -> getCalendar s e i) (calendarInfo,startRange,endRange)
         
-    let getAllCalendars (startRange: System.DateTimeOffset) (endRange: System.DateTimeOffset) =
-        getCalendarInfo (SharedCode.getKeyFile ())
-            |> Seq.map (getCalendar startRange endRange)
-
-    let getAllCalendarsWithCache (startRange: System.DateTimeOffset) (endRange: System.DateTimeOffset) =
-        getCalendarInfo (SharedCode.getKeyFile ())
-            |> Seq.map (getCalendarWithCache startRange endRange)

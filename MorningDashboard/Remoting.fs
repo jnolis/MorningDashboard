@@ -3,8 +3,26 @@
 open WebSharper
 open WebSharper.Sitelets
 
+type Key = {Name: string; Key: string}
+
+type Config =
+    {
+        Keys: Key seq;
+        TwitterConfig: Twitter.TwitterConfig;
+        Calendars: Calendar.CalendarInfo seq;
+        Commutes: OneBusAway.Commute seq;
+        WeatherLocation: Wunderground.Location;
+        TimeFormat: string;
+    }
+
+
 module Server =
-    let timeFormat = "h:mm tt"
+    
+    let config = 
+        SharedCode.getKeyFile()
+        |> System.IO.File.ReadAllText
+        |> (fun s -> Newtonsoft.Json.JsonConvert.DeserializeObject<Config>(s))
+
     let logCall (name:string) =
         System.Diagnostics.Debug.Write ("Server recieved " + name + " call at " + System.DateTime.Now.ToString() + "\n")
     module OneBusAway =
@@ -18,7 +36,7 @@ module Server =
                     try
                         logCall "OneBusAway"
                         let routesStopsAndArrivals =
-                            OneBusAway.getCommutes()
+                            config.Commutes
                             |> Seq.map (fun commute -> 
                                             let routes = Seq.map OneBusAway.getRouteInfoWithCache commute.RouteIds
                                             let stop = OneBusAway.getStopInfoWithCache commute.StopId
@@ -43,7 +61,7 @@ module Server =
                                                                                 | None -> (arrival.Scheduled,false)
                                                 let timeUntilArrivalString = (showTime - arrival.Current).Minutes.ToString() + "m"
                                                 let timeString = 
-                                                    let raw = showTime.ToString(timeFormat) 
+                                                    let raw = showTime.ToString(config.TimeFormat) 
                                                     if isPredicted then raw
                                                     else raw + "*"
                                                 {Time = timeString;TimeUntil = timeUntilArrivalString}
@@ -62,16 +80,14 @@ module Server =
         let getBlockData() =
             async {
                 logCall "Wunderground"
-                let state = "WA"
-                let city = "Seattle"
                 let maxHours = 12
                 let result =
-                    match (Wunderground.getCurrentWeatherWithCache state city, Wunderground.getHourlyForecastWithCache state city, Wunderground.getDailyForecastWithCache state city) with
+                    match (Wunderground.getCurrentWeatherWithCache config.WeatherLocation, Wunderground.getHourlyForecastWithCache config.WeatherLocation, Wunderground.getDailyForecastWithCache config.WeatherLocation) with
                     | (Some current, Some forecasts, Some daily) ->
                         let forecastData = 
                             if Seq.length forecasts > maxHours then Seq.take maxHours forecasts else forecasts
                             |> Seq.toList
-                            |> List.map (fun forecast -> {Time =forecast.Time.ToString(timeFormat); Temperature = forecast.Temperature.ToString(); WeatherIcon = forecast.WeatherIcon})
+                            |> List.map (fun forecast -> {Time =forecast.Time.ToString(config.TimeFormat); Temperature = forecast.Temperature.ToString(); WeatherIcon = forecast.WeatherIcon})
                         let (dailyLow,dailyHigh) =
                             let today = 
                                 daily
@@ -95,7 +111,7 @@ module Server =
                 let result =
                     match CurrentTime.getCurrentTime() with
                     | (Some currentTime) ->
-                        let time = currentTime.ToString(timeFormat)
+                        let time = currentTime.ToString(config.TimeFormat)
                         let weekday = currentTime.ToString("dddd")
                         let month = currentTime.ToString("MMMM")
                         let day = currentTime.ToString("%d")
@@ -119,7 +135,7 @@ module Server =
                         span.TotalHours.ToString("#.#") + "h"
                     else 
                         span.TotalMinutes.ToString("#") + "m"
-                instance.StartTime.ToString(timeFormat) + " (" + duration + ")"
+                instance.StartTime.ToString(config.TimeFormat) + " (" + duration + ")"
         [<Rpc>]
         let getBlockData() =
             async {
@@ -129,7 +145,8 @@ module Server =
                         let startRange = System.DateTimeOffset.Now.Date |> System.DateTimeOffset
                         let endRange = System.DateTimeOffset.Now.Date.AddDays(1.0) |> System.DateTimeOffset
                         let calendars = 
-                            Calendar.getAllCalendarsWithCache startRange endRange
+                            config.Calendars
+                            |> Seq.map (Calendar.getCalendarWithCache startRange endRange)
                             |> Seq.choose (
                                     Option.map (fun calendar ->
                                     let instances = 
@@ -147,7 +164,6 @@ module Server =
     module Twitter =
         type SimpleTweet = {Username: string; Text: string}
         type Response = {Title: string; Tweets: SimpleTweet list}
-        let screenNames = Seq.singleton "skyetetra"
         let formatter (s:string seq) =
             match Seq.length s with
             | 0 -> ""
@@ -166,6 +182,9 @@ module Server =
                 logCall "Twitter"
                 let result =
                     try
+                        let screenNames = 
+                                config.TwitterConfig.ScreenName
+                                |> Seq.singleton
                         let resultTweets =
                             screenNames
                             |> Seq.map (fun screenName -> async {return Twitter.getTweetsFromFriendsOfUser screenName})

@@ -3,7 +3,7 @@
 open Newtonsoft.Json
 
 module Wunderground =
-    
+    type Location = {City:string; State: string}
     let apiKey = SharedCode.getKeyFromProject "Wunderground"
     let wuIconToWeatherIcon (wuString:string) (isDay: bool) =
         match wuString with
@@ -38,11 +38,12 @@ module Wunderground =
     type DailyForecast = {Time: System.DateTimeOffset; High: int; Low: int; WeatherIcon: string}
     type Current = {Temperature: int; WeatherIcon: string}
     
-    let hourlyForecastCache = SharedCode.makeNewCache<string*string,HourlyForecast seq>()
-    let dailyForecastCache = SharedCode.makeNewCache<string*string,DailyForecast seq>()
-    let currentCache = SharedCode.makeNewCache<string*string,Current>()
+    let hourlyForecastCache = SharedCode.makeNewCache<Location,HourlyForecast seq>()
+    let dailyForecastCache = SharedCode.makeNewCache<Location,DailyForecast seq>()
+    let currentCache = SharedCode.makeNewCache<Location,Current>()
     
-    let getCurrentWeather (state:string) (city:string) : Current option =
+    let getCurrentWeather (location:Location) : Current option =
+        let (city,state) = (location.City,location.State)
         try
             let data =
                 @"http://api.wunderground.com/api/"+apiKey+"/conditions/q/"+state+"/"+ city+".json"
@@ -64,10 +65,11 @@ module Wunderground =
             Some {Temperature = temperature; WeatherIcon = icon}
         with | _ -> None
 
-    let getCurrentWeatherWithCache (state:string) (city:string) =
-        SharedCode.getFromCache currentCache (14.5*60.0) (fun (s,c) -> getCurrentWeather s c) (state,city)
+    let getCurrentWeatherWithCache (location:Location) =
+        SharedCode.getFromCache currentCache (14.5*60.0) (fun location -> getCurrentWeather location) location
 
-    let getHourlyForecast (state:string) (city:string) : (HourlyForecast seq) option =
+    let getHourlyForecast (location:Location) : (HourlyForecast seq) option =
+        let (city,state) = (location.City,location.State)
         try
                 @"http://api.wunderground.com/api/"+apiKey+"/hourly/q/"+state+"/"+ city+".json"
                 |> ((new System.Net.WebClient()).DownloadString)
@@ -93,10 +95,11 @@ module Wunderground =
         with
         | _ -> None
 
-    let getHourlyForecastWithCache (state:string) (city:string) =
-        SharedCode.getFromCache hourlyForecastCache (14.5*60.0) (fun (s,c) -> getHourlyForecast s c) (state,city)
+    let getHourlyForecastWithCache (location:Location) =
+        SharedCode.getFromCache hourlyForecastCache (14.5*60.0) (fun l -> getHourlyForecast l) location
 
-    let getDailyForecast (state:string) (city:string) : (DailyForecast seq) option =
+    let getDailyForecast (location:Location) : (DailyForecast seq) option =
+        let (city,state) = (location.City,location.State)
         try
                 @"http://api.wunderground.com/api/"+apiKey+"/forecast/q/"+state+"/"+ city+".json"
                 |> ((new System.Net.WebClient()).DownloadString)
@@ -123,5 +126,5 @@ module Wunderground =
         with
         | _ -> None
 
-    let getDailyForecastWithCache (state:string) (city:string) =
-        SharedCode.getFromCache dailyForecastCache (14.5*60.0) (fun (s,c) -> getDailyForecast s c) (state,city)
+    let getDailyForecastWithCache (location:Location) =
+        SharedCode.getFromCache dailyForecastCache (14.5*60.0) (fun location -> getDailyForecast location) location

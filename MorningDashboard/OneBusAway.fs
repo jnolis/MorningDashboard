@@ -15,13 +15,6 @@ module OneBusAway =
     let stopCache = SharedCode.makeNewCache<string,Stop>()
     let arrivalCache = SharedCode.makeNewCache<string*(string seq),Arrival seq>()
 
-    let getCommutes () =
-        SharedCode.getKeyFile()
-        |> System.IO.File.ReadAllText
-        |> Linq.JObject.Parse
-        |> (fun x -> x.["Commutes"])
-        |> Seq.map (fun x -> 
-                    {Name= string x.["Name"];StopId = string x.["StopId"];RouteIds = Seq.map string x.["RouteIds"]})
     let getArrivalsForStopAndRoutes (stopId:string) (routeIds:string seq) =
         let json =
             @"http://api.pugetsound.onebusaway.org/api/where/arrivals-and-departures-for-stop/"+stopId+".json?key="+apiKey

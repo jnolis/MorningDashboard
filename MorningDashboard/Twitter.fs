@@ -3,6 +3,10 @@
 open Newtonsoft.Json
 
 module Twitter =
+    type TwitterConfig = {
+        ScreenName: string; 
+        Keys: Tweetinvi.Core.Authentication.TwitterCredentials;
+        Friends: string seq;}
 
     let replaceOptionWithEmpty (s: 'T seq option) = 
         match s with
@@ -13,10 +17,7 @@ module Twitter =
         let keys = SharedCode.getKeyFile()
                     |> System.IO.File.ReadAllText
                     |> Linq.JObject.Parse
-                    |> (fun k -> k.["TwitterKeys"]
-                                    |> Seq.filter (fun user -> string user.["Name"] = screenName)
-                                    |> Seq.head)
-                    |> (fun k -> k.["Keys"])
+                    |> (fun k -> k.["TwitterConfig"].["Keys"])
         let consumerKey = string keys.["ConsumerKey"] 
         let consumerSecret = string keys.["ConsumerSecret"] 
         let accessToken = string keys.["AccessToken"] 

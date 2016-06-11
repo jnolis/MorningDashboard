@@ -33,12 +33,12 @@ module Client =
                         arrivalStrings
                         |> List.map (fun arrival ->
                                         TR [
-                                            TD [Text (arrival.Time)]
-                                            TD [Text (arrival.TimeUntil)]
+                                            TD [Text (arrival.Time)]-< [Attr.Class "col-md-8"]
+                                            TD [Text (arrival.TimeUntil)]-< [Attr.Class "col-md-4"]
                                         ]
                                     )
                     [
-                        Div [H5 [Text routeTitle]] -< [Attr.Class "panel-body"];
+                        Div [H5 [Text routeTitle]  -< [Attr.Class "accent-text"]] -< [Attr.Class "panel-body"];
                         (if List.length arrivalStrings > 0 then
                             Table arrivalElements -< [Attr.Class "table"]
                         else emptyTable "No upcoming arrivals")
@@ -49,14 +49,13 @@ module Client =
 
             do block.Clear()
             block.Append 
-                (Div [
-                    Div (List.append
+                (Div (List.append
                             (List.singleton (Div [H4 [Text "Commute" ]] -< [Attr.Class "panel-heading"]))
                             resultBlocks)
-                         -< [Attr.Class "panel panel-default"]
-                    ] -< [Attr.Class "col-md-3"])
+                         -< [Attr.Class "panel panel-default"])
         let getCommuteData = Server.OneBusAway.getBlockData
         refreshBlock "oneBusAwayBlock" 5 List.empty<Element> getCommuteData updateCommuteBlock
+
     let wundergroundBlock() =        
         let updateBlock (block:Element) (result: Server.Wunderground.Response) =
             let forecastElements =
@@ -70,21 +69,20 @@ module Client =
                             )
             let body = 
                 [
-                Div [H1 [I [Attr.Class ("weather wi " + result.Current.WeatherIcon)]] -< [Attr.Class "highlight"]] -< [Attr.Class "col-md-6"]
-                Div [   H4 [Text ("Current: " + result.Current.Temperature + "°")]
-                        H4 [Text ("High: " + result.Current.High+ "°")]
-                        H4 [Text ("Low: " + result.Current.Low+ "°")]] -< [Attr.Class "col-md-6"]
+                Div [H1 [I [Attr.Class ("weather wi " + result.Current.WeatherIcon)]] -< [Attr.Class "highlight accent-text"]] -< [Attr.Class "col-md-5 text-center"]
+                Div [   H4 [Text ("Now: " + result.Current.Temperature + "°")] -< [Attr.Class "accent-text"]
+                        H4 [Text ("High: " + result.Current.High+ "°")] -< [Attr.Class "accent-text"]
+                        H4 [Text ("Low: " + result.Current.Low+ "°")] -< [Attr.Class "accent-text"]
+                        ] -< [Attr.Class "col-md-7"]
                 ]
             block.Clear()
             block.Append 
                 (Div [
-                    Div [
                         Div [H4 [Text "Weather"]] -< [Attr.Class "panel-heading"]
                         Div body -< [Attr.Class "panel-body"]
                         Table forecastElements
                             -< [Attr.Class "table table-condensed"]
-                        ] -< [Attr.Class "panel panel-default"]
-                    ] -< [Attr.Class "col-md-4"])
+                        ] -< [Attr.Class "panel panel-default"])
         let getData = Server.Wunderground.getBlockData
         refreshBlock "wundergroundBlock" (60*15) List.empty<Element> getData updateBlock
 
@@ -92,16 +90,13 @@ module Client =
         let updateBlock (block:Element) (result: Server.CurrentTime.Response) =
             block.Clear()
             block.Append 
-                (Div [
-                    Div [
-                        Div [H4 [Text "Time and date"]] -< [Attr.Class "panel-heading"]
-                        Div[
-                            Div [H1 [Text result.Time] -< [Attr.Class "highlight"]] -< [Attr.Class "col-md-6"]
-                            Div [   H4 [Text result.Weekday]
-                                    H4 [Text (result.Month + " " + result.Day)]] -< [Attr.Class "col-md-6"]
-                                    ]-< [Attr.Class "panel-body"]
-                        ] -< [Attr.Class "panel panel-default"]
-                    ] -< [Attr.Class "col-md-5"])
+                (Div[
+                        Div [
+                                H1 [Text result.Time] -< [Attr.Class "accent-text highlight-small"]
+                                H4 [Text result.Weekday] -< [Attr.Class "accent-text"]
+                                H4 [Text (result.Month + " " + result.Day)] -< [Attr.Class "accent-text"]
+                                ] -< [Attr.Class "panel-body text-center"]  
+                        ] -< [Attr.Class "panel panel-default"])
         let getData = Server.CurrentTime.getBlockData
         refreshBlock "currentTimeBlock" 5 List.empty<Element> getData updateBlock
 
@@ -114,12 +109,12 @@ module Client =
                             calendar.Instances
                             |> List.map (fun instance ->
                                             TR [
-                                                TD [Text (instance.Event)]
-                                                TD [Text (instance.Time)]
+                                                TD [Text (instance.Event)] -< [Attr.Class "col-md-8"]
+                                                TD [Text (instance.Time)] -< [Attr.Class "col-md-4"]
                                             ]
                                         )
                         [
-                            Div [H5 [Text calendar.Name]] -< [Attr.Class "panel-body"];
+                            Div [H5 [Text calendar.Name] -< [Attr.Class "accent-text"]] -< [Attr.Class "panel-body"];
                             (if List.length calendar.Instances > 0 then
                                 Table instanceElements -< [Attr.Class "table"]
                             else emptyTable "No events today")
@@ -128,13 +123,11 @@ module Client =
                 |> List.concat
             block.Clear()
             block.Append 
-                (Div [ 
-                    Div
+                (Div
                         (List.append
                             (List.singleton(Div [H4 [Text "Daily events" ]] -< [Attr.Class "panel-heading"]))
                             calendarElements)
-                         -< [Attr.Class "panel panel-default"]
-                    ] -< [Attr.Class "col-md-5"])
+                         -< [Attr.Class "panel panel-default"])
         let getData = Server.Calendar.getBlockData
         refreshBlock "calendarBlock" (15*60) List.empty<Element> getData updateBlock
 
@@ -149,19 +142,17 @@ module Client =
                                         ]
                                     )
                     [
-                        Div [H5 [Text result.Title]] -< [Attr.Class "panel-body"];
+                        Div [H5 [Text result.Title] -< [Attr.Class "accent-text"]] -< [Attr.Class "panel-body"];
                         (if List.length tweetElements > 0 then Table tweetElements -< [Attr.Class "table table-condensed"] else emptyTable "No tweets available")
                     ]
 
             block.Clear()
             block.Append 
-                (Div [ 
-                    Div
+                (Div
                         (List.append
                             (List.singleton(Div [H4 [Text "Recent Tweets" ]] -< [Attr.Class "panel-heading"]))
                             tweetElements)
-                         -< [Attr.Class "panel panel-default"]
-                    ] -< [Attr.Class "col-md-5"])
+                         -< [Attr.Class "panel panel-default"])
         let getData = Server.Twitter.getBlockData
         refreshBlock "twitterBlock" (10) List.empty<Element> getData updateBlock
 
@@ -170,12 +161,10 @@ module Client =
             async {return Some ()} 
         let initialElements = 
             [
-                Div [
                     Div [
                         Div [H4 [Text "Traffic"]] -< [Attr.Class "panel-heading"]
                         Div [Attr.Id "trafficMap"; Attr.Class "map"]
                     ] -< [Attr.Class "panel panel-default"]
-                ] -< [Attr.Class "col-md-5"]
             ]
         let updateBlock (block:Element) (result: unit) =
             do WebSharper.JQuery.JQuery.Of("trafficMap").Ready(JS.Window?createMap("trafficMap")).Ignore

@@ -16,12 +16,18 @@ module Site =
 
 
         let body = Div [
-                        ClientSide <@ Client.oneBusAwayBlock() @>
-                        ClientSide <@ Client.wundergroundBlock() @>
-                        ClientSide <@ Client.currentTimeBlock() @>
-                        ClientSide <@ Client.calendarBlock() @>
-                        ClientSide <@ Client.twitterBlock() @>
-                        ClientSide <@ Client.trafficMapBlock() @>
+                        Div [Attr.Class "col-md-3"] -<
+                                [   ClientSide <@ Client.trafficMapBlock() @>
+                                    ClientSide <@ Client.oneBusAwayBlock() @>]
+                        Div [Attr.Class "col-md-4"] -<
+                                [   ClientSide <@ Client.currentTimeBlock() @>
+                                    ClientSide <@ Client.wundergroundBlock() @>]
+                        Div [Attr.Class "col-md-5"] -<
+                                [   ClientSide <@ Client.calendarBlock() @>
+                                    ClientSide <@ Client.twitterBlock() @>]
+                        
+                        
+                        
                         ] -< [Attr.Id "bodyTemplate"; Attr.Class "container"]
         Content.WithTemplate HomePageTemplate body
 
