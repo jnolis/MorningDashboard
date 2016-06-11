@@ -73,8 +73,8 @@ module Server =
                 return result
             }
     module Wunderground =
-        type Forecast = {Time: string; Temperature: string; WeatherIcon: string}
-        type Current = {Temperature: string; WeatherIcon: string; Low: string; High: string}
+        type Forecast = {Time: string; Temperature: string; WeatherIcon: string; Accent: bool}
+        type Current = {Temperature: string; WeatherIcon: string; Accent: bool; Low: string; High: string}
         type Response = {Current: Current; Forecast: Forecast list}
         [<Rpc>]
         let getBlockData() =
@@ -87,7 +87,7 @@ module Server =
                         let forecastData = 
                             if Seq.length forecasts > maxHours then Seq.take maxHours forecasts else forecasts
                             |> Seq.toList
-                            |> List.map (fun forecast -> {Time =forecast.Time.ToString(config.TimeFormat); Temperature = forecast.Temperature.ToString(); WeatherIcon = forecast.WeatherIcon})
+                            |> List.map (fun forecast -> {Time =forecast.Time.ToString(config.TimeFormat); Temperature = forecast.Temperature.ToString(); WeatherIcon = forecast.WeatherIcon.Icon; Accent = forecast.WeatherIcon.Accent})
                         let (dailyLow,dailyHigh) =
                             let today = 
                                 daily
@@ -97,7 +97,7 @@ module Server =
                             | Some t -> (t.Low.ToString(),t.High.ToString())
                             | None -> ("","")
                         let currentData =
-                            {Temperature = current.Temperature.ToString(); WeatherIcon = current.WeatherIcon; Low = dailyLow; High = dailyHigh}
+                            {Temperature = current.Temperature.ToString(); WeatherIcon = current.WeatherIcon.Icon; Accent = current.WeatherIcon.Accent; Low = dailyLow; High = dailyHigh}
                         Some {Current = currentData; Forecast = forecastData}
                     | _ -> None
                 return result

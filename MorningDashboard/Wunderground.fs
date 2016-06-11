@@ -4,39 +4,40 @@ open Newtonsoft.Json
 
 module Wunderground =
     type Location = {City:string; State: string}
+    type WeatherIcon = {Icon:string; Accent: bool}
     let apiKey = SharedCode.getKeyFromProject "Wunderground"
     let wuIconToWeatherIcon (wuString:string) (isDay: bool) =
         match wuString with
-            | "chanceflurries" -> ("snow-wind", "night-snow-wind")
-            | "chancerain" -> ("rain", "night-alt-rain")
-            | "chancesleet" -> ("sleet", "night-alt-sleet")
-            | "chancesnow" -> ("snow", "night-alt-snow")
-            | "chancetstorms" -> ("thunderstorm", "night-alt-thunderstorm")
-            | "clear" -> ("day-sunny", "night-clear")
-            | "cloudy" -> ("day-cloudy", "night-alt-cloudy")
-            | "flurries" -> ("snow-wind", "night-alt-snow-wind")
-            | "fog" -> ("day-fog", "night-fog")
-            | "hazy" -> ("day-haze", "day-haze")
-            | "mostlycloudy" -> ("day-cloudy", "night-alt-cloudy")
-            | "mostlysunny" -> ("day-sunny", "night-clear")
-            | "partlycloudy" -> ("day-cloudy", "night-alt-cloudy")
-            | "partlysunny" -> ("day-sunny", "night-clear")
-            | "sleet" -> ("showers", "night-alt-showers")
-            | "rain" -> ("sleet", "night-alt-sleet")
-            | "snow" -> ("snow", "night-alt-snow")
-            | "sunny" -> ("day-sunny", "night-clear")
-            | "tstorms" -> ("thunderstorm", "night-alt-thunderstorm")
-            | _ -> ("na", "na")
-        |> (if isDay then fst else snd)
-        |> (fun x -> "wi-" + x)
+            | "chanceflurries" -> (("snow-wind", "night-snow-wind"),true)
+            | "chancerain" -> (("rain", "night-alt-rain"),true)
+            | "chancesleet" -> (("sleet", "night-alt-sleet"),true)
+            | "chancesnow" -> (("snow", "night-alt-snow"),true)
+            | "chancetstorms" -> (("thunderstorm", "night-alt-thunderstorm"),true)
+            | "clear" -> (("day-sunny", "night-clear"),false)
+            | "cloudy" -> (("day-cloudy", "night-alt-cloudy"),false)
+            | "flurries" -> (("snow-wind", "night-alt-snow-wind"),true)
+            | "fog" -> (("day-fog", "night-fog"),false)
+            | "hazy" -> (("day-haze", "day-haze"),false)
+            | "mostlycloudy" -> (("day-cloudy", "night-alt-cloudy"),false)
+            | "mostlysunny" -> (("day-sunny", "night-clear"),false)
+            | "partlycloudy" -> (("day-cloudy", "night-alt-cloudy"),false)
+            | "partlysunny" -> (("day-sunny", "night-clear"),false)
+            | "sleet" -> (("showers", "night-alt-showers"),true)
+            | "rain" -> (("sleet", "night-alt-sleet"),true)
+            | "snow" -> (("snow", "night-alt-snow"),true)
+            | "sunny" -> (("day-sunny", "night-clear"),false)
+            | "tstorms" -> (("thunderstorm", "night-alt-thunderstorm"),true)
+            | _ -> (("na", "na"),false)
+        |> (fun (icon,accent) -> ((if isDay then fst else snd) icon, accent))
+        |> (fun (icon,accent) -> {Icon="wi-" + icon;Accent=accent})
 
     let iconUrlToIsDay (url:string) = 
         let iconFilename = url.Split('/')
                             |> Array.last
         not (iconFilename.StartsWith("nt_"))
-    type HourlyForecast = {Time: System.DateTimeOffset; Temperature: int; WeatherIcon: string}
-    type DailyForecast = {Time: System.DateTimeOffset; High: int; Low: int; WeatherIcon: string}
-    type Current = {Temperature: int; WeatherIcon: string}
+    type HourlyForecast = {Time: System.DateTimeOffset; Temperature: int; WeatherIcon: WeatherIcon}
+    type DailyForecast = {Time: System.DateTimeOffset; High: int; Low: int; WeatherIcon: WeatherIcon}
+    type Current = {Temperature: int; WeatherIcon: WeatherIcon}
     
     let hourlyForecastCache = SharedCode.makeNewCache<Location,HourlyForecast seq>()
     let dailyForecastCache = SharedCode.makeNewCache<Location,DailyForecast seq>()

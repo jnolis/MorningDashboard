@@ -243,39 +243,38 @@
      {
       return function(result)
       {
-       var x,mapping,forecastElements,body,arg106,arg107,arg108,arg109,arg10a,arg10b,x3,arg10c,x4,arg10d,x5,arg10e,arg10f,arg1010;
+       var x,mapping,forecastElements,body,arg105,arg106,arg107,arg108,arg109,arg10a,x3,arg10b,x4,arg10c,x5,arg10d,arg10e,arg10f;
        x=result.Forecast;
        mapping=function(forecast)
        {
-        var arg10,arg101,x1,arg102,arg103,arg104,arg105,x2;
+        var arg10,arg101,x1,arg102,arg103,arg104,x2;
         x1=forecast.Time;
         arg101=List.ofArray([Tags.Tags().text(x1)]);
-        arg104="wi "+forecast.WeatherIcon;
-        arg103=List.ofArray([Attr.Attr().NewAttr("class",arg104)]);
+        arg103=List.ofArray([Attr.Attr().NewAttr("class","wi "+forecast.WeatherIcon+(forecast.Accent?" accent-text-minor":""))]);
         arg102=List.ofArray([Tags.Tags().NewTag("i",arg103)]);
         x2=forecast.Temperature+"°";
-        arg105=List.ofArray([Tags.Tags().text(x2)]);
-        arg10=List.ofArray([Tags.Tags().NewTag("td",arg101),Tags.Tags().NewTag("td",arg102),Tags.Tags().NewTag("td",arg105)]);
+        arg104=List.ofArray([Tags.Tags().text(x2)]);
+        arg10=List.ofArray([Tags.Tags().NewTag("td",arg101),Tags.Tags().NewTag("td",arg102),Tags.Tags().NewTag("td",arg104)]);
         return Tags.Tags().NewTag("tr",arg10);
        };
        forecastElements=List.map(mapping,x);
-       arg109="weather wi "+result.Current.WeatherIcon;
-       arg108=List.ofArray([Attr.Attr().NewAttr("class",arg109)]);
-       arg107=List.ofArray([Tags.Tags().NewTag("i",arg108)]);
-       arg106=List.ofArray([Operators.add(Tags.Tags().NewTag("h1",arg107),List.ofArray([Attr.Attr().NewAttr("class","highlight accent-text")]))]);
+       arg108="weather wi "+result.Current.WeatherIcon;
+       arg107=List.ofArray([Attr.Attr().NewAttr("class",arg108)]);
+       arg106=List.ofArray([Tags.Tags().NewTag("i",arg107)]);
+       arg105=List.ofArray([Operators.add(Tags.Tags().NewTag("h1",arg106),List.ofArray([Attr.Attr().NewAttr("class","highlight "+(result.Current.Accent?"accent-text-minor":"accent-text"))]))]);
        x3="Now: "+result.Current.Temperature+"°";
-       arg10b=List.ofArray([Tags.Tags().text(x3)]);
+       arg10a=List.ofArray([Tags.Tags().text(x3)]);
        x4="High: "+result.Current.High+"°";
-       arg10c=List.ofArray([Tags.Tags().text(x4)]);
+       arg10b=List.ofArray([Tags.Tags().text(x4)]);
        x5="Low: "+result.Current.Low+"°";
-       arg10d=List.ofArray([Tags.Tags().text(x5)]);
-       arg10a=List.ofArray([Operators.add(Tags.Tags().NewTag("h4",arg10b),List.ofArray([Attr.Attr().NewAttr("class","accent-text")])),Operators.add(Tags.Tags().NewTag("h4",arg10c),List.ofArray([Attr.Attr().NewAttr("class","accent-text")])),Operators.add(Tags.Tags().NewTag("h4",arg10d),List.ofArray([Attr.Attr().NewAttr("class","accent-text")]))]);
-       body=List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg106),List.ofArray([Attr.Attr().NewAttr("class","col-md-5 text-center")])),Operators.add(Tags.Tags().NewTag("div",arg10a),List.ofArray([Attr.Attr().NewAttr("class","col-md-7")]))]);
+       arg10c=List.ofArray([Tags.Tags().text(x5)]);
+       arg109=List.ofArray([Operators.add(Tags.Tags().NewTag("h4",arg10a),List.ofArray([Attr.Attr().NewAttr("class","accent-text")])),Operators.add(Tags.Tags().NewTag("h4",arg10b),List.ofArray([Attr.Attr().NewAttr("class","accent-text")])),Operators.add(Tags.Tags().NewTag("h4",arg10c),List.ofArray([Attr.Attr().NewAttr("class","accent-text")]))]);
+       body=List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg105),List.ofArray([Attr.Attr().NewAttr("class","col-md-5 text-center")])),Operators.add(Tags.Tags().NewTag("div",arg109),List.ofArray([Attr.Attr().NewAttr("class","col-md-7")]))]);
        block["HtmlProvider@33"].Clear(block.get_Body());
-       arg1010=List.ofArray([Tags.Tags().text("Weather")]);
-       arg10f=List.ofArray([Tags.Tags().NewTag("h4",arg1010)]);
-       arg10e=List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg10f),List.ofArray([Attr.Attr().NewAttr("class","panel-heading")])),Operators.add(Tags.Tags().NewTag("div",body),List.ofArray([Attr.Attr().NewAttr("class","panel-body")])),Operators.add(Tags.Tags().NewTag("table",forecastElements),List.ofArray([Attr.Attr().NewAttr("class","table table-condensed")]))]);
-       return block.AppendI(Operators.add(Tags.Tags().NewTag("div",arg10e),List.ofArray([Attr.Attr().NewAttr("class","panel panel-default")])));
+       arg10f=List.ofArray([Tags.Tags().text("Weather")]);
+       arg10e=List.ofArray([Tags.Tags().NewTag("h4",arg10f)]);
+       arg10d=List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg10e),List.ofArray([Attr.Attr().NewAttr("class","panel-heading")])),Operators.add(Tags.Tags().NewTag("div",body),List.ofArray([Attr.Attr().NewAttr("class","panel-body")])),Operators.add(Tags.Tags().NewTag("table",forecastElements),List.ofArray([Attr.Attr().NewAttr("class","table table-condensed")]))]);
+       return block.AppendI(Operators.add(Tags.Tags().NewTag("div",arg10d),List.ofArray([Attr.Attr().NewAttr("class","panel panel-default")])));
       };
      };
      getData=function()

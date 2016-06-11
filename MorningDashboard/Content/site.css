@@ -33,7 +33,7 @@ body {
 .map {
 height: 300px;
 width: 100%;
-filter: invert(100%);
+filter: invert(100%) hue-rotate(30deg);
 }
 
 .panel-body {
@@ -42,6 +42,10 @@ filter: invert(100%);
 
 .accent-text {
 	color: #FF9340 !important;
+}
+
+.accent-text-minor {
+	color: #D435CD !important;
 }
 
 .panel-heading {
