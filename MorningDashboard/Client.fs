@@ -110,7 +110,8 @@ module Client =
                             calendar.Instances
                             |> List.map (fun instance ->
                                             TR [
-                                                TD [Text (instance.Event)] -< [Attr.Class "col-md-8"]
+                                                TD [Text (instance.Domain)] -< [Attr.Class "col-md-3"]
+                                                TD [Text (instance.Event)] -< [Attr.Class "col-md-5"]
                                                 TD [Text (instance.Time)] -< [Attr.Class "col-md-4"]
                                             ]
                                         )

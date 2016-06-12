@@ -17,10 +17,9 @@ module Calendar =
         }
 
     type CalendarInfo = {Name: string; Url: string; Type: CalendarType}
-    type Instance = {Name: string; StartTime: System.DateTimeOffset; EndTime: System.DateTimeOffset; BusyStatus: BusyStatus; IsAllDay: bool}
-    type Calendar = {Name: string; StartRange: System.DateTimeOffset; EndRange: System.DateTimeOffset; Instances: Instance seq}
-
-    let calendarCache = SharedCode.makeNewCache<CalendarInfo*System.DateTimeOffset*System.DateTimeOffset,Calendar>()
+    type Instance = {Domain: string; Name: string; StartTime: System.DateTimeOffset; EndTime: System.DateTimeOffset; BusyStatus: BusyStatus; IsAllDay: bool}
+    type Calendar = {Name: string; Date: System.DateTime; Instances: Instance seq}
+    let calendarCache = SharedCode.makeNewCache<CalendarInfo*System.DateTime,Calendar>()
 
 
     let getCustomFunctions (t: CalendarType) =
@@ -68,31 +67,75 @@ module Calendar =
         |> parser.ParseString
         parser.VCalendar
 
-    let getInstancesInRange (customFunctions: CustomFunctions) (calendarName: string) (calendar: EWSoftware.PDI.Objects.VCalendar) (startDate: System.DateTimeOffset) (endDate: System.DateTimeOffset) =
+    let getInstancesInRange (customFunctions: CustomFunctions) (calendarName: string) (calendar: EWSoftware.PDI.Objects.VCalendar) (date: System.DateTime) =
+        let dateStartTime = date.Date
+        let dateEndTime = date.Date.AddDays(1.0)
         calendar.Events 
         |> Seq.map (fun e -> 
             let eventName = e.Summary.Value
             let busyStatus = customFunctions.BusyStatus e
-            let isAllDay = customFunctions.IsAllDay e
-            e.InstancesBetween(startDate.LocalDateTime,endDate.LocalDateTime,true)
+            let isFlaggedAllDay = customFunctions.IsAllDay e
+            e.InstancesBetween(dateStartTime,dateEndTime,true)
             |> Seq.map (fun instance -> 
-                            let startTime = System.DateTimeOffset instance.StartDateTime
-                            let endTime = System.DateTimeOffset instance.EndDateTime
-                            {Name= eventName; StartTime = startTime; EndTime = endTime; BusyStatus = busyStatus; IsAllDay = isAllDay}
+                            let startTime =  instance.StartDateTime
+                            let endTime = instance.EndDateTime
+                            let isAllDay = isFlaggedAllDay || (startTime <= dateStartTime  && endTime >= dateEndTime)
+                            {Domain= calendarName; Name= eventName; StartTime = System.DateTimeOffset startTime; EndTime = System.DateTimeOffset endTime; 
+                                BusyStatus = busyStatus; IsAllDay = isAllDay}
                             )
-            |> Seq.filter (fun instance -> instance.StartTime < endDate && instance.EndTime > startDate)
+            |> Seq.filter (fun instance -> instance.StartTime < System.DateTimeOffset dateEndTime && instance.EndTime > System.DateTimeOffset dateStartTime)
             )
         |> Seq.concat
         |> Seq.sortBy (fun instance -> (instance.StartTime, instance.Name))
 
-    let getCalendar (startRange: System.DateTimeOffset) (endRange: System.DateTimeOffset) (calendarInfo:CalendarInfo) =
+    let getCalendar (date: System.DateTime) (calendarInfo:CalendarInfo) =
         try
             let customFunctions = getCustomFunctions calendarInfo.Type
             let rawCalendar = getRawCalendar calendarInfo.Url
-            let instances = getInstancesInRange customFunctions calendarInfo.Name rawCalendar startRange endRange
-            Some {Name = calendarInfo.Name; Instances = instances; StartRange = startRange; EndRange = endRange}
+            let instances = getInstancesInRange customFunctions calendarInfo.Name rawCalendar date
+            Some {Calendar.Name = calendarInfo.Name;Instances = instances;Date=date}
         with | _ -> None
 
-    let getCalendarWithCache (startRange: System.DateTimeOffset) (endRange: System.DateTimeOffset) (calendarInfo) =
-        SharedCode.getFromCache calendarCache (15.0*60.0-5.0) (fun (i,s,e) -> getCalendar s e i) (calendarInfo,startRange,endRange)
+    let getCalendarWithCache (date: System.DateTime) (calendarInfo) =
+        SharedCode.getFromCache calendarCache (15.0*60.0-5.0) (fun (i,d) -> getCalendar d i) (calendarInfo,date)
+
+    let getCombinedCalendarWithCache (date: System.DateTime) (calendarInfos: CalendarInfo seq) =
+        let calendarInstanceSets = 
+            calendarInfos
+            |> Seq.map (fun cal -> async { return getCalendarWithCache date cal })
+            |> Async.Parallel
+            |> Async.RunSynchronously
+            |> Seq.choose id
+            |> Seq.map (fun cal -> (cal.Name,Set.ofSeq cal.Instances))
+
+        let getCalendarsWithInstances (calendarInstanceSets: (string*Set<Instance>) seq) (instance:Instance) =
+            let validCalendars = 
+                calendarInstanceSets
+                |> Seq.map (fun (cal,instances) -> (cal, Set.contains instance instances))
+            if Seq.forall snd validCalendars then
+                match Seq.length calendarInstanceSets with
+                | 0 -> ""
+                | 1 -> calendarInstanceSets |> Seq.head |> fst
+                | 2 -> "Both"
+                | _ -> "All"
+            else
+                validCalendars
+                |> Seq.filter snd
+                |> Seq.map fst
+                |> SharedCode.formatter
+                
+        let allInstances = 
+            calendarInstanceSets
+            |> Seq.map snd
+            |> Set.unionMany
+            |> Set.map (fun instance -> {instance with Domain = getCalendarsWithInstances calendarInstanceSets instance})
+            |> Set.toSeq
+            |> Seq.sortBy (fun instance -> (instance.StartTime,instance.EndTime,instance.Domain)) 
+        {Name = calendarInfos
+                |> Seq.map (fun x -> x.Name) 
+                |> Seq.sort 
+                |> SharedCode.formatter; 
+        Instances = allInstances;
+        Date = date}
+        
         

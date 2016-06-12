@@ -56,3 +56,15 @@ module SharedCode =
 
     let getKeyFromProject (keyName:string) =
         getKey (getKeyFile ()) keyName
+
+    let formatter (s:string seq) =
+        match Seq.length s with
+        | 0 -> ""
+        | 1 -> Seq.head s
+        | 2 -> (Seq.head s) + " and " + (Seq.last s)
+        | _ ->
+            let last = Seq.last s
+            let secondToLast = Seq.item (Seq.length s - 2) s
+            let first = Seq.head s
+            let rest = s |> Seq.mapi (fun id str -> (id,str)) |> Seq.filter (fun (id,str) -> id <> 0 && id < (Seq.length s - 2)) |> Seq.map snd
+            Seq.fold (fun current next -> current + ", " + next) first (Seq.append rest (Seq.singleton (secondToLast + ", and " + last)))

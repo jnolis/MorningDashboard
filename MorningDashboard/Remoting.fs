@@ -121,7 +121,7 @@ module Server =
             }
 
     module Calendar =
-        type Instance = {Time: string ; Event: string}
+        type Instance = {Time: string ; Domain: string; Event: string}
         type Calendar = {Name: string; Instances: Instance list}
         type Response = {Calendars: Calendar list}
         let generateTimeAndDuration (instance:Calendar.Instance)=
@@ -142,19 +142,13 @@ module Server =
                 logCall "Calendar"
                 let result = 
                     try
-                        let startRange = System.DateTimeOffset.Now.Date |> System.DateTimeOffset
-                        let endRange = System.DateTimeOffset.Now.Date.AddDays(1.0) |> System.DateTimeOffset
-                        let calendars = 
-                            config.Calendars
-                            |> Seq.map (Calendar.getCalendarWithCache startRange endRange)
-                            |> Seq.choose (
-                                    Option.map (fun calendar ->
-                                    let instances = 
-                                            calendar.Instances
-                                            |> Seq.map (fun instance -> {Event = instance.Name; Time = generateTimeAndDuration instance})
-                                            |> Seq.toList
-                                    {Name= calendar.Name; Instances = instances}))
-                            |> Seq.toList
+                        let date = System.DateTimeOffset.Now.Date 
+                        let fullCalendar = Calendar.getCombinedCalendarWithCache date config.Calendars
+                        let instances = 
+                                fullCalendar.Instances
+                                |> Seq.map (fun instance -> {Event = instance.Name; Time = generateTimeAndDuration instance; Domain = instance.Domain})
+                                |> Seq.toList
+                        let calendars = List.singleton {Name=fullCalendar.Name; Instances=instances}
                         Some {Calendars = calendars}
                     with | _ -> None
                     
@@ -164,17 +158,6 @@ module Server =
     module Twitter =
         type SimpleTweet = {Username: string; Text: string}
         type Response = {Title: string; Tweets: SimpleTweet list}
-        let formatter (s:string seq) =
-            match Seq.length s with
-            | 0 -> ""
-            | 1 -> Seq.head s
-            | 2 -> (Seq.head s) + " and " + (Seq.last s)
-            | _ ->
-                let last = Seq.last s
-                let secondToLast = Seq.item (Seq.length s - 2) s
-                let first = Seq.head s
-                let rest = s |> Seq.mapi (fun id str -> (id,str)) |> Seq.filter (fun (id,str) -> id <> 0 && id < (Seq.length s - 2)) |> Seq.map snd
-                Seq.fold (fun current next -> current + ", " + next) first (Seq.append rest (Seq.singleton (secondToLast + ", and " + last)))
         let maxTweets = 10
         [<Rpc>]
         let getBlockData() =
@@ -182,12 +165,10 @@ module Server =
                 logCall "Twitter"
                 let result =
                     try
-                        let screenNames = 
-                                config.TwitterConfig.ScreenName
-                                |> Seq.singleton
+                        let configs = Seq.singleton config.TwitterConfig
                         let resultTweets =
-                            screenNames
-                            |> Seq.map (fun screenName -> async {return Twitter.getTweetsFromFriendsOfUser screenName})
+                            configs
+                            |> Seq.map (fun config -> async {return Twitter.getTweetsFromConfig config})
                             |> Async.Parallel
                             |> Async.RunSynchronously
                             |> Seq.concat
@@ -196,7 +177,10 @@ module Server =
                             |> Seq.map (fun tweet -> {Username = tweet.CreatedBy.ScreenName; Text = tweet.Text})
                             |> SharedCode.seqTopN maxTweets
                             |> Seq.toList
-                        let title = formatter screenNames
+                        let title =
+                            Seq.singleton config.TwitterConfig.ScreenName
+                            |> Seq.append config.TwitterConfig.JoinedScreenNames
+                            |> SharedCode.formatter
                         Some {Title = title; Tweets = resultTweets}
                     with | _ -> None
                 return result

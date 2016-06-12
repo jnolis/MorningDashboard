@@ -11,35 +11,37 @@
      {
       return function(result)
       {
-       var x,mapping,lists,calendarElements,arg105,arg106,arg107;
+       var x,mapping,lists,calendarElements,arg106,arg107,arg108;
        x=result.Calendars;
        mapping=function(calendar)
        {
-        var x1,mapping1,instanceElements,arg103,arg104,x4;
+        var x1,mapping1,instanceElements,arg104,arg105,x5;
         x1=calendar.Instances;
         mapping1=function(instance)
         {
-         var arg10,arg101,x2,arg102,x3;
-         x2=instance.Event;
+         var arg10,arg101,x2,arg102,x3,arg103,x4;
+         x2=instance.Domain;
          arg101=List.ofArray([Tags.Tags().text(x2)]);
-         x3=instance.Time;
+         x3=instance.Event;
          arg102=List.ofArray([Tags.Tags().text(x3)]);
-         arg10=List.ofArray([Operators.add(Tags.Tags().NewTag("td",arg101),List.ofArray([Attr.Attr().NewAttr("class","col-md-8")])),Operators.add(Tags.Tags().NewTag("td",arg102),List.ofArray([Attr.Attr().NewAttr("class","col-md-4")]))]);
+         x4=instance.Time;
+         arg103=List.ofArray([Tags.Tags().text(x4)]);
+         arg10=List.ofArray([Operators.add(Tags.Tags().NewTag("td",arg101),List.ofArray([Attr.Attr().NewAttr("class","col-md-3")])),Operators.add(Tags.Tags().NewTag("td",arg102),List.ofArray([Attr.Attr().NewAttr("class","col-md-5")])),Operators.add(Tags.Tags().NewTag("td",arg103),List.ofArray([Attr.Attr().NewAttr("class","col-md-4")]))]);
          return Tags.Tags().NewTag("tr",arg10);
         };
         instanceElements=List.map(mapping1,x1);
-        x4=calendar.Name;
-        arg104=List.ofArray([Tags.Tags().text(x4)]);
-        arg103=List.ofArray([Operators.add(Tags.Tags().NewTag("h5",arg104),List.ofArray([Attr.Attr().NewAttr("class","accent-text")]))]);
-        return List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg103),List.ofArray([Attr.Attr().NewAttr("class","panel-body")])),Seq.length(calendar.Instances)>0?Operators.add(Tags.Tags().NewTag("table",instanceElements),List.ofArray([Attr.Attr().NewAttr("class","table")])):Client1.emptyTable("No events today")]);
+        x5=calendar.Name;
+        arg105=List.ofArray([Tags.Tags().text(x5)]);
+        arg104=List.ofArray([Operators.add(Tags.Tags().NewTag("h5",arg105),List.ofArray([Attr.Attr().NewAttr("class","accent-text")]))]);
+        return List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg104),List.ofArray([Attr.Attr().NewAttr("class","panel-body")])),Seq.length(calendar.Instances)>0?Operators.add(Tags.Tags().NewTag("table",instanceElements),List.ofArray([Attr.Attr().NewAttr("class","table")])):Client1.emptyTable("No events today")]);
        };
        lists=List.map(mapping,x);
        calendarElements=List.concat(lists);
        block["HtmlProvider@33"].Clear(block.get_Body());
-       arg107=List.ofArray([Tags.Tags().text("Daily events")]);
-       arg106=List.ofArray([Tags.Tags().NewTag("h4",arg107)]);
-       arg105=List.append(List.singleton(Operators.add(Tags.Tags().NewTag("div",arg106),List.ofArray([Attr.Attr().NewAttr("class","panel-heading")]))),calendarElements);
-       return block.AppendI(Operators.add(Tags.Tags().NewTag("div",arg105),List.ofArray([Attr.Attr().NewAttr("class","panel panel-default")])));
+       arg108=List.ofArray([Tags.Tags().text("Daily events")]);
+       arg107=List.ofArray([Tags.Tags().NewTag("h4",arg108)]);
+       arg106=List.append(List.singleton(Operators.add(Tags.Tags().NewTag("div",arg107),List.ofArray([Attr.Attr().NewAttr("class","panel-heading")]))),calendarElements);
+       return block.AppendI(Operators.add(Tags.Tags().NewTag("div",arg106),List.ofArray([Attr.Attr().NewAttr("class","panel panel-default")])));
       };
      };
      getData=function()

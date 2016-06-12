@@ -6,7 +6,7 @@ module Twitter =
     type TwitterConfig = {
         ScreenName: string; 
         Keys: Tweetinvi.Core.Authentication.TwitterCredentials;
-        Friends: string seq;}
+        JoinedScreenNames: string seq;}
 
     let replaceOptionWithEmpty (s: 'T seq option) = 
         match s with
@@ -32,16 +32,19 @@ module Twitter =
         mutable Stream: Tweetinvi.Core.Interfaces.Streaminvi.IUserStream}
     
     let tweets = new System.Collections.Generic.Dictionary<string,TweetData>()
+    let userCache = SharedCode.makeNewCache<string,Tweetinvi.Core.Interfaces.IUser>()
+    let friendCache = SharedCode.makeNewCache<string,Set<int64>>()
 
-    let getUser (username:string) = 
+    let getUser (screenName:string) = 
         try
             Tweetinvi.TweetinviEvents.QueryBeforeExecute.Add( fun a -> a.TwitterQuery.Timeout <- System.TimeSpan.FromSeconds(30.0))
-            let user = Tweetinvi.User.GetUserFromScreenName username
+            let user = Tweetinvi.User.GetUserFromScreenName screenName
             if user = null then None else Some user
         with
-        | exn -> 
-            do System.Diagnostics.Debug.WriteLine("Couldn't pull tweets " + (Tweetinvi.ExceptionHandler.GetLastException()).TwitterDescription) 
-            None
+        | exn -> None
+
+    let getUserFromCache (screenName:string) =
+        SharedCode.getFromCache userCache (60.0*60.0*6.0) getUser screenName
 
     let tweetText (x:Tweetinvi.Core.Interfaces.ITweet) = 
         let substitute (pattern:string) (replacement:string) (input:string) =
@@ -71,70 +74,87 @@ module Twitter =
 
     let getFriends (screenName: string) =
         try 
-        Tweetinvi.User.GetFriends screenName
-        with | _ -> Seq.empty<Tweetinvi.Core.Interfaces.IUser>
-                        
-    let getSharedFriendsIds (screenNames: Set<string>) =
-        let users = screenNames
-                    |> Set.toSeq
-                    |> Seq.choose getUser
-        
-        let userIds = users |> Seq.map (fun friend -> friend.Id) |> Set.ofSeq
-        users
-        |> Seq.map (fun user ->
-                    async {
-                        let friends = user.ScreenName |> getFriends |> Seq.map (fun friend -> friend.Id) |> Set.ofSeq
-                        return Set.union friends userIds
-                        }
-                    )
-        |> Async.Parallel
-        |> Async.RunSynchronously
-        |> Set.intersectMany
+        Tweetinvi.User.GetFriendIds screenName
+        |> Set.ofSeq
+        |> Some
+        with | _ -> None
 
-    let updateStream (screenNames: Set<string>) (stream:Tweetinvi.Core.Interfaces.Streaminvi.IFilteredStream) =
-        do stream.ClearFollows()
-        do screenNames
-            |> getSharedFriendsIds
-            |> Set.toSeq
-            |> SharedCode.seqTopN 5
-            |> Seq.iter (fun friendId -> stream.AddFollow(System.Nullable friendId))
+    let getFriendsFromCache (screenName: string) =
+        SharedCode.getFromCache friendCache (60.0*60.0*6.0) getFriends screenName   
+         
+    let getSharedFriendsIds (screenNames: string seq) =
+        let usersAndFriends = 
+            screenNames
+                    |> Seq.map (fun screenName -> 
+                                async {
+                                    let result =
+                                        match (getUserFromCache screenName) with
+                                        | Some user ->
+                                            match getFriendsFromCache user.ScreenName with
+                                            | Some friends -> Some (user,friends)
+                                            | None -> None
+                                        | None -> None
+                                    return result})
+                    |> Async.Parallel
+                    |> Async.RunSynchronously
+                    |> Seq.ofArray
+                    |> Seq.choose id
+        
+        let userIds = 
+            usersAndFriends
+            |> Seq.map fst
+            |> Seq.map (fun user -> user.Id) 
+            |> Set.ofSeq
+
+        usersAndFriends
+        |> Seq.map snd
+        |> (fun s -> if Seq.length s = 0 then Set.empty<int64> else Set.intersectMany s)
+        |> Set.union userIds
+
 
     let updateTweets (tweets: System.Collections.Generic.List<Tweetinvi.Core.Interfaces.ITweet>) = 
         tweets.RemoveAll(fun tweet -> tweet.CreatedAt.AddHours(6.0) < System.DateTime.Now)
         |> ignore
 
-    let getTweetsFromFriendsOfUser (screenName: string) =
-        if tweets.ContainsKey screenName then
-            System.Diagnostics.Debug.Write "Getting tweets from existing stream\n"
-            let data = tweets.Item screenName
-            do data.MostRecentRequest <- System.DateTimeOffset.Now
-            data.Tweets
-        else
-            System.Diagnostics.Debug.Write "Creating new twitter stream\n"
-            let mutable tweetData = {
-                MostRecentRequest = System.DateTimeOffset.Now; 
-                Stream = Tweetinvi.Stream.CreateUserStream(); 
-                Tweets = new System.Collections.Generic.List<Tweetinvi.Core.Interfaces.ITweet>()
-                }
-            tweets.Add(screenName,tweetData)
-            
-            let eventFunction (eventArgs:Tweetinvi.Core.Events.EventArguments.TweetReceivedEventArgs) : unit =
-                if not eventArgs.Tweet.IsRetweet && not eventArgs.Tweet.InReplyToUserId.HasValue then
-                    tweetData.Tweets.Add(eventArgs.Tweet)
-                    System.Diagnostics.Debug.Write ("Noticed a tweet: " + eventArgs.Tweet.Text + "\n")
-            do tweetData.Stream.TweetCreatedByFriend.Add(eventFunction)
-            do tweetData.Stream.TweetCreatedByMe.Add(eventFunction)
-            do async { 
-                    System.Diagnostics.Debug.Write "Prepping to start twitter stream\n"
-                    let credentials = getCredentials screenName
-                    do tweetData.Stream.Credentials <- credentials
-                    do tweetData.Stream.StartStream()
-                    return ()
+    let getTweetsFromUserAndJoinedFriends (screenName: string) (friends: Set<int64>) =
+        let screenNameTweets = 
+            if tweets.ContainsKey screenName then
+                System.Diagnostics.Debug.Write "Getting tweets from existing stream\n"
+                let data = tweets.Item screenName
+                do data.MostRecentRequest <- System.DateTimeOffset.Now
+                data.Tweets
+            else
+                System.Diagnostics.Debug.Write "Creating new twitter stream\n"
+                let mutable tweetData = {
+                    MostRecentRequest = System.DateTimeOffset.Now; 
+                    Stream = Tweetinvi.Stream.CreateUserStream(); 
+                    Tweets = new System.Collections.Generic.List<Tweetinvi.Core.Interfaces.ITweet>()
                     }
-            |> Async.Start
-            |> ignore
-            System.Diagnostics.Debug.Write "Twitter listener successfully started!\n"
-            tweetData.Tweets
+                tweets.Add(screenName,tweetData)
+            
+                let eventFunction (eventArgs:Tweetinvi.Core.Events.EventArguments.TweetReceivedEventArgs) : unit =
+                    if not eventArgs.Tweet.IsRetweet && not eventArgs.Tweet.InReplyToUserId.HasValue then
+                        tweetData.Tweets.Add(eventArgs.Tweet)
+                        System.Diagnostics.Debug.Write ("Noticed a tweet: " + eventArgs.Tweet.Text + "\n")
+                do tweetData.Stream.TweetCreatedByFriend.Add(eventFunction)
+                do tweetData.Stream.TweetCreatedByMe.Add(eventFunction)
+                do async { 
+                        System.Diagnostics.Debug.Write "Prepping to start twitter stream\n"
+                        let credentials = getCredentials screenName
+                        do tweetData.Stream.Credentials <- credentials
+                        do tweetData.Stream.StartStream()
+                        return ()
+                        }
+                |> Async.Start
+                |> ignore
+                System.Diagnostics.Debug.Write "Twitter listener successfully started!\n"
+                tweetData.Tweets
+        screenNameTweets
+        |> Seq.filter (fun tweet -> Set.contains tweet.CreatedBy.Id friends)
+
+    let getTweetsFromConfig (config:TwitterConfig) =
+        let friends = getSharedFriendsIds config.JoinedScreenNames
+        getTweetsFromUserAndJoinedFriends config.ScreenName friends
 
     let refreshFunction (eventArgs: System.Timers.ElapsedEventArgs) =
         tweets
