@@ -34,11 +34,11 @@ module Client =
                         |> List.map (fun arrival ->
                                         TR [
                                             TD [Text (arrival.Time)]-< [Attr.Class "col-md-8"]
-                                            TD [Text (arrival.TimeUntil)]-< [Attr.Class "col-md-4"]
+                                            TD [Text (arrival.TimeUntil)]-< [Attr.Class ("col-md-4" + if arrival.Accent then " text-warning" else "")]
                                         ]
                                     )
                     [
-                        Div [H5 [Text routeTitle]  -< [Attr.Class "accent-text"]] -< [Attr.Class "panel-body"];
+                        Div [H5 [Text routeTitle]  -< [Attr.Class "text-primary"]] -< [Attr.Class "panel-body"];
                         (if List.length arrivalStrings > 0 then
                             Table arrivalElements -< [Attr.Class "table"]
                         else emptyTable "No upcoming arrivals")
@@ -63,17 +63,17 @@ module Client =
                 |> List.map (fun forecast ->
                                 TR [
                                     TD [Text forecast.Time]
-                                    TD [I [Attr.Class ("wi " + forecast.WeatherIcon + if forecast.Accent then " accent-text-minor" else "")]]
+                                    TD [I [Attr.Class ("wi " + forecast.WeatherIcon + if forecast.Accent then " text-success" else "")]]
                                     TD [Text (forecast.Temperature + "°")]
                                 ]
                             )
             let body = 
                 [
                 Div [H1 [I [Attr.Class ("weather wi " + result.Current.WeatherIcon)]] -< 
-                                [Attr.Class ("highlight " + (if result.Current.Accent then "accent-text-minor" else "accent-text"))]] -< [Attr.Class "col-md-5 text-center"]
-                Div [   H4 [Text ("Now: " + result.Current.Temperature + "°")] -< [Attr.Class "accent-text"]
-                        H4 [Text ("High: " + result.Current.High+ "°")] -< [Attr.Class "accent-text"]
-                        H4 [Text ("Low: " + result.Current.Low+ "°")] -< [Attr.Class "accent-text"]
+                                [Attr.Class ("highlight " + (if result.Current.Accent then "text-success" else "text-primary"))]] -< [Attr.Class "col-md-5 text-center"]
+                Div [   H4 [Text ("Now: " + result.Current.Temperature + "°")] -< [Attr.Class "text-primary"]
+                        H4 [Text ("High: " + result.Current.High+ "°")] -< [Attr.Class "text-primary"]
+                        H4 [Text ("Low: " + result.Current.Low+ "°")] -< [Attr.Class "text-primary"]
                         ] -< [Attr.Class "col-md-7"]
                 ]
             block.Clear()
@@ -93,9 +93,9 @@ module Client =
             block.Append 
                 (Div[
                         Div [
-                                H1 [Text result.Time] -< [Attr.Class "accent-text highlight-small"]
-                                H4 [Text result.Weekday] -< [Attr.Class "accent-text"]
-                                H4 [Text (result.Month + " " + result.Day)] -< [Attr.Class "accent-text"]
+                                H1 [Text result.Time] -< [Attr.Class "text-primary highlight-small"]
+                                H4 [Text result.Weekday] -< [Attr.Class "text-primary"]
+                                H4 [Text (result.Month + " " + result.Day)] -< [Attr.Class "text-primary"]
                                 ] -< [Attr.Class "panel-body text-center"]  
                         ] -< [Attr.Class "panel panel-default"])
         let getData = Server.CurrentTime.getBlockData
@@ -116,7 +116,7 @@ module Client =
                                             ]
                                         )
                         [
-                            Div [H5 [Text calendar.Name] -< [Attr.Class "accent-text"]] -< [Attr.Class "panel-body"];
+                            Div [H5 [Text calendar.Name] -< [Attr.Class "text-primary"]] -< [Attr.Class "panel-body"];
                             (if List.length calendar.Instances > 0 then
                                 Table instanceElements -< [Attr.Class "table"]
                             else emptyTable "No events today")
@@ -144,7 +144,7 @@ module Client =
                                         ]
                                     )
                     [
-                        Div [H5 [Text result.Title] -< [Attr.Class "accent-text"]] -< [Attr.Class "panel-body"];
+                        Div [H5 [Text result.Title] -< [Attr.Class "text-primary"]] -< [Attr.Class "panel-body"];
                         (if List.length tweetElements > 0 then Table tweetElements -< [Attr.Class "table table-condensed"] else emptyTable "No tweets available")
                     ]
 

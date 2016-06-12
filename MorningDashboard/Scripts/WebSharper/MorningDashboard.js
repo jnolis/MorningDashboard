@@ -32,7 +32,7 @@
         instanceElements=List.map(mapping1,x1);
         x5=calendar.Name;
         arg105=List.ofArray([Tags.Tags().text(x5)]);
-        arg104=List.ofArray([Operators.add(Tags.Tags().NewTag("h5",arg105),List.ofArray([Attr.Attr().NewAttr("class","accent-text")]))]);
+        arg104=List.ofArray([Operators.add(Tags.Tags().NewTag("h5",arg105),List.ofArray([Attr.Attr().NewAttr("class","text-primary")]))]);
         return List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg104),List.ofArray([Attr.Attr().NewAttr("class","panel-body")])),Seq.length(calendar.Instances)>0?Operators.add(Tags.Tags().NewTag("table",instanceElements),List.ofArray([Attr.Attr().NewAttr("class","table")])):Client1.emptyTable("No events today")]);
        };
        lists=List.map(mapping,x);
@@ -67,7 +67,7 @@
        arg103=List.ofArray([Tags.Tags().text(x1)]);
        x2=result.Month+" "+result.Day;
        arg104=List.ofArray([Tags.Tags().text(x2)]);
-       arg101=List.ofArray([Operators.add(Tags.Tags().NewTag("h1",arg102),List.ofArray([Attr.Attr().NewAttr("class","accent-text highlight-small")])),Operators.add(Tags.Tags().NewTag("h4",arg103),List.ofArray([Attr.Attr().NewAttr("class","accent-text")])),Operators.add(Tags.Tags().NewTag("h4",arg104),List.ofArray([Attr.Attr().NewAttr("class","accent-text")]))]);
+       arg101=List.ofArray([Operators.add(Tags.Tags().NewTag("h1",arg102),List.ofArray([Attr.Attr().NewAttr("class","text-primary highlight-small")])),Operators.add(Tags.Tags().NewTag("h4",arg103),List.ofArray([Attr.Attr().NewAttr("class","text-primary")])),Operators.add(Tags.Tags().NewTag("h4",arg104),List.ofArray([Attr.Attr().NewAttr("class","text-primary")]))]);
        arg10=List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg101),List.ofArray([Attr.Attr().NewAttr("class","panel-body text-center")]))]);
        return block.AppendI(Operators.add(Tags.Tags().NewTag("div",arg10),List.ofArray([Attr.Attr().NewAttr("class","panel panel-default")])));
       };
@@ -109,12 +109,12 @@
          arg101=List.ofArray([Tags.Tags().text(x)]);
          x1=arrival.TimeUntil;
          arg102=List.ofArray([Tags.Tags().text(x1)]);
-         arg10=List.ofArray([Operators.add(Tags.Tags().NewTag("td",arg101),List.ofArray([Attr.Attr().NewAttr("class","col-md-8")])),Operators.add(Tags.Tags().NewTag("td",arg102),List.ofArray([Attr.Attr().NewAttr("class","col-md-4")]))]);
+         arg10=List.ofArray([Operators.add(Tags.Tags().NewTag("td",arg101),List.ofArray([Attr.Attr().NewAttr("class","col-md-8")])),Operators.add(Tags.Tags().NewTag("td",arg102),List.ofArray([Attr.Attr().NewAttr("class","col-md-4"+(arrival.Accent?" text-warning":""))]))]);
          return Tags.Tags().NewTag("tr",arg10);
         };
         arrivalElements=List.map(mapping1,arrivalStrings);
         arg104=List.ofArray([Tags.Tags().text(routeTitle)]);
-        arg103=List.ofArray([Operators.add(Tags.Tags().NewTag("h5",arg104),List.ofArray([Attr.Attr().NewAttr("class","accent-text")]))]);
+        arg103=List.ofArray([Operators.add(Tags.Tags().NewTag("h5",arg104),List.ofArray([Attr.Attr().NewAttr("class","text-primary")]))]);
         return List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg103),List.ofArray([Attr.Attr().NewAttr("class","panel-body")])),Seq.length(arrivalStrings)>0?Operators.add(Tags.Tags().NewTag("table",arrivalElements),List.ofArray([Attr.Attr().NewAttr("class","table")])):Client1.emptyTable("No upcoming arrivals")]);
        };
        lists=List.map(mapping,resultCommutes);
@@ -221,7 +221,7 @@
        tweetElements=List.map(mapping,x);
        x2=result.Title;
        arg103=List.ofArray([Tags.Tags().text(x2)]);
-       arg102=List.ofArray([Operators.add(Tags.Tags().NewTag("h5",arg103),List.ofArray([Attr.Attr().NewAttr("class","accent-text")]))]);
+       arg102=List.ofArray([Operators.add(Tags.Tags().NewTag("h5",arg103),List.ofArray([Attr.Attr().NewAttr("class","text-primary")]))]);
        tweetElements1=List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg102),List.ofArray([Attr.Attr().NewAttr("class","panel-body")])),Seq.length(tweetElements)>0?Operators.add(Tags.Tags().NewTag("table",tweetElements),List.ofArray([Attr.Attr().NewAttr("class","table table-condensed")])):Client1.emptyTable("No tweets available")]);
        block["HtmlProvider@33"].Clear(block.get_Body());
        arg106=List.ofArray([Tags.Tags().text("Recent Tweets")]);
@@ -252,7 +252,7 @@
         var arg10,arg101,x1,arg102,arg103,arg104,x2;
         x1=forecast.Time;
         arg101=List.ofArray([Tags.Tags().text(x1)]);
-        arg103=List.ofArray([Attr.Attr().NewAttr("class","wi "+forecast.WeatherIcon+(forecast.Accent?" accent-text-minor":""))]);
+        arg103=List.ofArray([Attr.Attr().NewAttr("class","wi "+forecast.WeatherIcon+(forecast.Accent?" text-success":""))]);
         arg102=List.ofArray([Tags.Tags().NewTag("i",arg103)]);
         x2=forecast.Temperature+"°";
         arg104=List.ofArray([Tags.Tags().text(x2)]);
@@ -263,14 +263,14 @@
        arg108="weather wi "+result.Current.WeatherIcon;
        arg107=List.ofArray([Attr.Attr().NewAttr("class",arg108)]);
        arg106=List.ofArray([Tags.Tags().NewTag("i",arg107)]);
-       arg105=List.ofArray([Operators.add(Tags.Tags().NewTag("h1",arg106),List.ofArray([Attr.Attr().NewAttr("class","highlight "+(result.Current.Accent?"accent-text-minor":"accent-text"))]))]);
+       arg105=List.ofArray([Operators.add(Tags.Tags().NewTag("h1",arg106),List.ofArray([Attr.Attr().NewAttr("class","highlight "+(result.Current.Accent?"text-success":"text-primary"))]))]);
        x3="Now: "+result.Current.Temperature+"°";
        arg10a=List.ofArray([Tags.Tags().text(x3)]);
        x4="High: "+result.Current.High+"°";
        arg10b=List.ofArray([Tags.Tags().text(x4)]);
        x5="Low: "+result.Current.Low+"°";
        arg10c=List.ofArray([Tags.Tags().text(x5)]);
-       arg109=List.ofArray([Operators.add(Tags.Tags().NewTag("h4",arg10a),List.ofArray([Attr.Attr().NewAttr("class","accent-text")])),Operators.add(Tags.Tags().NewTag("h4",arg10b),List.ofArray([Attr.Attr().NewAttr("class","accent-text")])),Operators.add(Tags.Tags().NewTag("h4",arg10c),List.ofArray([Attr.Attr().NewAttr("class","accent-text")]))]);
+       arg109=List.ofArray([Operators.add(Tags.Tags().NewTag("h4",arg10a),List.ofArray([Attr.Attr().NewAttr("class","text-primary")])),Operators.add(Tags.Tags().NewTag("h4",arg10b),List.ofArray([Attr.Attr().NewAttr("class","text-primary")])),Operators.add(Tags.Tags().NewTag("h4",arg10c),List.ofArray([Attr.Attr().NewAttr("class","text-primary")]))]);
        body=List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg105),List.ofArray([Attr.Attr().NewAttr("class","col-md-5 text-center")])),Operators.add(Tags.Tags().NewTag("div",arg109),List.ofArray([Attr.Attr().NewAttr("class","col-md-7")]))]);
        block["HtmlProvider@33"].Clear(block.get_Body());
        arg10f=List.ofArray([Tags.Tags().text("Weather")]);

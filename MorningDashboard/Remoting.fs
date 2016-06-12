@@ -26,7 +26,7 @@ module Server =
     let logCall (name:string) =
         System.Diagnostics.Debug.Write ("Server recieved " + name + " call at " + System.DateTime.Now.ToString() + "\n")
     module OneBusAway =
-        type ResponseArrivals = {Time: string; TimeUntil: string}
+        type ResponseArrivals = {Time: string; TimeUntil: string; Accent: bool}
         type Response = {RouteTitle: string; Arrivals: ResponseArrivals list}
 
         [<Rpc>]
@@ -64,7 +64,7 @@ module Server =
                                                     let raw = showTime.ToString(config.TimeFormat) 
                                                     if isPredicted then raw
                                                     else raw + "*"
-                                                {Time = timeString;TimeUntil = timeUntilArrivalString}
+                                                {Time = timeString;TimeUntil = timeUntilArrivalString; Accent = (showTime - arrival.Current).Minutes <= 5}
                                             List.map arrivalToString (List.ofSeq a)
                                         {RouteTitle = routeTitle; Arrivals = arrivalStrings})
                             |> List.ofSeq

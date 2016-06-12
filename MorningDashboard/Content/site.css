@@ -33,21 +33,37 @@ body {
 .map {
 height: 300px;
 width: 100%;
-filter: invert(100%) hue-rotate(30deg);
+filter: invert(100%) hue-rotate(15deg);
 }
 
 .panel-body {
     padding: 5px 10px 5px 10px;
 }
 
-.accent-text {
-	color: #FF9340 !important;
+
+
+.text-primary {
+  color: #FF9340 !important;
+}
+a.text-primary:hover,
+a.text-primary:focus {
+  color: #FF6FF0 !important;
+}
+.text-success {
+  color: #33CEC3 !important;
+}
+a.text-success:hover,
+a.text-success:focus {
+  color: #009D91 !important;
 }
 
-.accent-text-minor {
-	color: #D435CD !important;
+.text-warning {
+  color: #D435CD !important;
 }
-
+a.text-warning:hover,
+a.text-warning:focus {
+  color: #AA00A2 !important;
+}
 .panel-heading {
     padding: 5px 10px;
 	background-color: #1D766F !important;
