@@ -63,14 +63,14 @@ module Client =
                 |> List.map (fun forecast ->
                                 TR [
                                     TD [Text forecast.Time]
-                                    TD [I [Attr.Class ("wi " + forecast.WeatherIcon + if forecast.Accent then " text-success" else "")]]
+                                    TD [I [Attr.Class ("wi " + forecast.WeatherIcon + if forecast.Accent then " text-warning" else "")]]
                                     TD [Text (forecast.Temperature + "°")]
                                 ]
                             )
             let body = 
                 [
                 Div [H1 [I [Attr.Class ("weather wi " + result.Current.WeatherIcon)]] -< 
-                                [Attr.Class ("highlight " + (if result.Current.Accent then "text-success" else "text-primary"))]] -< [Attr.Class "col-md-5 text-center"]
+                                [Attr.Class ("highlight " + (if result.Current.Accent then "text-warning" else "text-primary"))]] -< [Attr.Class "col-md-5 text-center"]
                 Div [   H4 [Text ("Now: " + result.Current.Temperature + "°")] -< [Attr.Class "text-primary"]
                         H4 [Text ("High: " + result.Current.High+ "°")] -< [Attr.Class "text-primary"]
                         H4 [Text ("Low: " + result.Current.Low+ "°")] -< [Attr.Class "text-primary"]

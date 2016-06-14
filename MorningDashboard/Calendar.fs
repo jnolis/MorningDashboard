@@ -11,13 +11,23 @@ module Calendar =
         | Tentative
         | Busy
         | OutOfOffice
+
+
+    type CalendarInfo = {Name: string; Url: string; Type: CalendarType}
+    type Instance = {
+        Domain: string; 
+        Name: string; 
+        StartTime: System.DateTimeOffset; 
+        EndTime: System.DateTimeOffset; 
+        BusyStatus: BusyStatus; 
+        IsAllDay: bool}
+
     type CustomFunctions = {
         BusyStatus: EWSoftware.PDI.Objects.VEvent -> BusyStatus
         IsAllDay: EWSoftware.PDI.Objects.VEvent -> bool
+        NameFormatter: string -> string
+        InstanceFixer: Instance -> Instance
         }
-
-    type CalendarInfo = {Name: string; Url: string; Type: CalendarType}
-    type Instance = {Domain: string; Name: string; StartTime: System.DateTimeOffset; EndTime: System.DateTimeOffset; BusyStatus: BusyStatus; IsAllDay: bool}
     type Calendar = {Name: string; Date: System.DateTime; Instances: Instance seq}
     let calendarCache = SharedCode.makeNewCache<CalendarInfo*System.DateTime,Calendar>()
 
@@ -33,9 +43,24 @@ module Calendar =
                     | _ -> Busy
                 with | _ -> Busy
             let isAllDay (event: EWSoftware.PDI.Objects.VEvent) =
-                try event.CustomProperties.["X-MICROSOFT-CDO-ALLDAYEVENT"].Value = "TRUE" 
+                try event.CustomProperties.["X-MICROSOFT-CDO-ALLDAYEVENT"].Value = "TRUE"
                 with | _ -> false
-            {CustomFunctions.BusyStatus = busyStatus; IsAllDay = isAllDay}
+            let nameFormatter =
+                let filterIfInvitation i =
+                    new System.Text.RegularExpressions.Regex(@"^Invitation: (.*) @ .+, .+ \(.*\)")
+                    |> (fun x -> x.Match i)
+                    |> (fun x -> if x.Groups.[1].Success then x.Groups.[1].Value else i)
+                filterIfInvitation
+            let instanceFixer (instance:Instance) =
+                let isMidnight (dt:System.DateTime) =
+                    dt.Hour = 0 && dt.Minute = 0 && dt.Second = 0 && dt.Millisecond = 0
+                if (not instance.IsAllDay) && isMidnight instance.StartTime.UtcDateTime && isMidnight instance.EndTime.UtcDateTime then
+                    let newStartTime = System.DateTimeOffset (System.DateTime.SpecifyKind(instance.StartTime.UtcDateTime.Date,System.DateTimeKind.Local))
+                    let newEndTime = System.DateTimeOffset (System.DateTime.SpecifyKind(instance.EndTime.UtcDateTime.Date,System.DateTimeKind.Local))
+                    let newIsAllDay = true
+                    {instance with StartTime = newStartTime; EndTime = newEndTime; IsAllDay = newIsAllDay}
+                else instance
+            {CustomFunctions.BusyStatus = busyStatus; IsAllDay = isAllDay; NameFormatter = nameFormatter; InstanceFixer = instanceFixer}
 
         let googleFunctions = 
             let busyStatus (event: EWSoftware.PDI.Objects.VEvent) =
@@ -46,7 +71,7 @@ module Calendar =
                     | _ -> Busy
                 with | _ -> Busy
             let isAllDay (event: EWSoftware.PDI.Objects.VEvent) = false
-            {CustomFunctions.BusyStatus = busyStatus; IsAllDay = isAllDay}
+            {CustomFunctions.BusyStatus = busyStatus; IsAllDay = isAllDay; NameFormatter = id; InstanceFixer = id}
         match t with
         | Outlook -> outlookFunctions
         | Google -> googleFunctions
@@ -80,9 +105,14 @@ module Calendar =
                             let startTime =  instance.StartDateTime
                             let endTime = instance.EndDateTime
                             let isAllDay = isFlaggedAllDay || (startTime <= dateStartTime  && endTime >= dateEndTime)
-                            {Domain= calendarName; Name= eventName; StartTime = System.DateTimeOffset startTime; EndTime = System.DateTimeOffset endTime; 
-                                BusyStatus = busyStatus; IsAllDay = isAllDay}
+                            {Domain= calendarName; 
+                            Name= customFunctions.NameFormatter eventName; 
+                            StartTime = System.DateTimeOffset startTime; 
+                            EndTime = System.DateTimeOffset endTime; 
+                            BusyStatus = busyStatus;
+                            IsAllDay = isAllDay}
                             )
+            |> Seq.map customFunctions.InstanceFixer
             |> Seq.filter (fun instance -> instance.StartTime < System.DateTimeOffset dateEndTime && instance.EndTime > System.DateTimeOffset dateStartTime)
             )
         |> Seq.concat
@@ -106,36 +136,19 @@ module Calendar =
             |> Async.Parallel
             |> Async.RunSynchronously
             |> Seq.choose id
-            |> Seq.map (fun cal -> (cal.Name,Set.ofSeq cal.Instances))
 
-        let getCalendarsWithInstances (calendarInstanceSets: (string*Set<Instance>) seq) (instance:Instance) =
-            let validCalendars = 
-                calendarInstanceSets
-                |> Seq.map (fun (cal,instances) -> (cal, Set.contains instance instances))
-            if Seq.forall snd validCalendars then
-                match Seq.length calendarInstanceSets with
-                | 0 -> ""
-                | 1 -> calendarInstanceSets |> Seq.head |> fst
-                | 2 -> "Both"
-                | _ -> "All"
-            else
-                validCalendars
-                |> Seq.filter snd
-                |> Seq.map fst
-                |> SharedCode.formatter
-                
-        let allInstances = 
+        let instances =
             calendarInstanceSets
-            |> Seq.map snd
-            |> Set.unionMany
-            |> Set.map (fun instance -> {instance with Domain = getCalendarsWithInstances calendarInstanceSets instance})
-            |> Set.toSeq
-            |> Seq.sortBy (fun instance -> (instance.StartTime,instance.EndTime,instance.Domain)) 
-        {Name = calendarInfos
-                |> Seq.map (fun x -> x.Name) 
-                |> Seq.sort 
-                |> SharedCode.formatter; 
-        Instances = allInstances;
-        Date = date}
-        
-        
+            |> Seq.map (fun calendar -> calendar.Instances)
+            |> Seq.concat
+            |> Seq.groupBy (fun instance -> (instance.StartTime,instance.EndTime,instance.BusyStatus,instance.Name,instance.IsAllDay))
+            |> Seq.map (fun (key, s) ->
+                let domain =
+                    s 
+                    |> Seq.map (fun instance -> instance.Domain)
+                    |> Seq.sort
+                    |> SharedCode.formatter
+                {(Seq.head s) with Domain = domain})
+        let date = (Seq.head calendarInstanceSets  ).Date
+        let name = calendarInstanceSets |> Seq.map (fun x -> x.Name) |> Seq.sort |> SharedCode.formatter
+        {Name = name; Date = date; Instances = instances}

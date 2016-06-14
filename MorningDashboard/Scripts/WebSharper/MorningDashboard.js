@@ -252,7 +252,7 @@
         var arg10,arg101,x1,arg102,arg103,arg104,x2;
         x1=forecast.Time;
         arg101=List.ofArray([Tags.Tags().text(x1)]);
-        arg103=List.ofArray([Attr.Attr().NewAttr("class","wi "+forecast.WeatherIcon+(forecast.Accent?" text-success":""))]);
+        arg103=List.ofArray([Attr.Attr().NewAttr("class","wi "+forecast.WeatherIcon+(forecast.Accent?" text-warning":""))]);
         arg102=List.ofArray([Tags.Tags().NewTag("i",arg103)]);
         x2=forecast.Temperature+"°";
         arg104=List.ofArray([Tags.Tags().text(x2)]);
@@ -263,7 +263,7 @@
        arg108="weather wi "+result.Current.WeatherIcon;
        arg107=List.ofArray([Attr.Attr().NewAttr("class",arg108)]);
        arg106=List.ofArray([Tags.Tags().NewTag("i",arg107)]);
-       arg105=List.ofArray([Operators.add(Tags.Tags().NewTag("h1",arg106),List.ofArray([Attr.Attr().NewAttr("class","highlight "+(result.Current.Accent?"text-success":"text-primary"))]))]);
+       arg105=List.ofArray([Operators.add(Tags.Tags().NewTag("h1",arg106),List.ofArray([Attr.Attr().NewAttr("class","highlight "+(result.Current.Accent?"text-warning":"text-primary"))]))]);
        x3="Now: "+result.Current.Temperature+"°";
        arg10a=List.ofArray([Tags.Tags().text(x3)]);
        x4="High: "+result.Current.High+"°";

@@ -49,12 +49,13 @@ a.text-primary:hover,
 a.text-primary:focus {
   color: #FF6FF0 !important;
 }
-.text-success {
-  color: #33CEC3 !important;
+
+.text-danger {
+  color: #FFE840 !important;
 }
-a.text-success:hover,
-a.text-success:focus {
-  color: #009D91 !important;
+a.text-danger:hover,
+a.text-danger:focus {
+  color: #FFE100 !important;
 }
 
 .text-warning {
@@ -63,6 +64,14 @@ a.text-success:focus {
 a.text-warning:hover,
 a.text-warning:focus {
   color: #AA00A2 !important;
+}
+
+.text-success {
+  color: #33CEC3 !important;
+}
+a.text-success:hover,
+a.text-success:focus {
+  color: #009D91 !important;
 }
 .panel-heading {
     padding: 5px 10px;
