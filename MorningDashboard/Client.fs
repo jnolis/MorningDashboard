@@ -33,7 +33,8 @@ module Client =
                         arrivalStrings
                         |> List.map (fun arrival ->
                                         TR [
-                                            TD [Text (arrival.Time)]-< [Attr.Class "col-md-8"]
+                                            TD [Text (arrival.Time)]-< [Attr.Class "col-md-5"]
+                                            TD [Text (arrival.Name)]-< [Attr.Class "col-md-3"]
                                             TD [Text (arrival.TimeUntil)]-< [Attr.Class ("col-md-4" + if arrival.Accent then " text-warning" else "")]
                                         ]
                                     )

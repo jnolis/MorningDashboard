@@ -24,8 +24,7 @@ module Site =
                                 [   ClientSide <@ Client.currentTimeBlock() @>
                                     ClientSide <@ Client.wundergroundBlock() @>]
                         Div [Attr.Class "col-md-5"] -<
-                                [   ClientSide <@ Client.calendarBlock() @>
-                                    ClientSide <@ Client.twitterBlock() @>]
+                                [   ClientSide <@ Client.calendarBlock() @>]
                         
                         
                         

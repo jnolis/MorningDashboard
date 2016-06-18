@@ -25,7 +25,6 @@ module Calendar =
     type CustomFunctions = {
         BusyStatus: EWSoftware.PDI.Objects.VEvent -> BusyStatus
         IsAllDay: EWSoftware.PDI.Objects.VEvent -> bool
-        NameFormatter: string -> string
         InstanceFixer: Instance -> Instance
         }
     type Calendar = {Name: string; Date: System.DateTime; Instances: Instance seq}
@@ -45,22 +44,28 @@ module Calendar =
             let isAllDay (event: EWSoftware.PDI.Objects.VEvent) =
                 try event.CustomProperties.["X-MICROSOFT-CDO-ALLDAYEVENT"].Value = "TRUE"
                 with | _ -> false
-            let nameFormatter =
-                let filterIfInvitation i =
-                    new System.Text.RegularExpressions.Regex(@"^Invitation: (.*) @ .+, .+ \(.*\)")
-                    |> (fun x -> x.Match i)
-                    |> (fun x -> if x.Groups.[1].Success then x.Groups.[1].Value else i)
-                filterIfInvitation
+
             let instanceFixer (instance:Instance) =
+                let checkIfInvitation i =
+                    new System.Text.RegularExpressions.Regex(@"^Invitation: (.*) @ .+ \(.*\)")
+                    |> (fun x -> x.Match i)
+                    |> (fun x -> if x.Groups.[1].Success then (true,x.Groups.[1].Value) else (false,i))
+                let (isGoogleInvitation,updatedName) = checkIfInvitation instance.Name
                 let isMidnight (dt:System.DateTime) =
                     dt.Hour = 0 && dt.Minute = 0 && dt.Second = 0 && dt.Millisecond = 0
-                if (not instance.IsAllDay) && isMidnight instance.StartTime.UtcDateTime && isMidnight instance.EndTime.UtcDateTime then
-                    let newStartTime = System.DateTimeOffset (System.DateTime.SpecifyKind(instance.StartTime.UtcDateTime.Date,System.DateTimeKind.Local))
-                    let newEndTime = System.DateTimeOffset (System.DateTime.SpecifyKind(instance.EndTime.UtcDateTime.Date,System.DateTimeKind.Local))
-                    let newIsAllDay = true
-                    {instance with StartTime = newStartTime; EndTime = newEndTime; IsAllDay = newIsAllDay}
+                if isGoogleInvitation then
+                    if (not instance.IsAllDay) && isMidnight instance.StartTime.UtcDateTime && isMidnight instance.EndTime.UtcDateTime then
+                        let newStartTime = System.DateTimeOffset (System.DateTime.SpecifyKind(instance.StartTime.UtcDateTime.Date,System.DateTimeKind.Local))
+                        let newEndTime = System.DateTimeOffset (System.DateTime.SpecifyKind(instance.EndTime.UtcDateTime.Date,System.DateTimeKind.Local))
+                        let newIsAllDay = true
+                        {instance with 
+                            StartTime = newStartTime;
+                            EndTime = newEndTime;
+                            IsAllDay = newIsAllDay;
+                            Name = updatedName}
+                    else {instance with Name = updatedName}
                 else instance
-            {CustomFunctions.BusyStatus = busyStatus; IsAllDay = isAllDay; NameFormatter = nameFormatter; InstanceFixer = instanceFixer}
+            {CustomFunctions.BusyStatus = busyStatus; IsAllDay = isAllDay; InstanceFixer = instanceFixer}
 
         let googleFunctions = 
             let busyStatus (event: EWSoftware.PDI.Objects.VEvent) =
@@ -71,7 +76,7 @@ module Calendar =
                     | _ -> Busy
                 with | _ -> Busy
             let isAllDay (event: EWSoftware.PDI.Objects.VEvent) = false
-            {CustomFunctions.BusyStatus = busyStatus; IsAllDay = isAllDay; NameFormatter = id; InstanceFixer = id}
+            {CustomFunctions.BusyStatus = busyStatus; IsAllDay = isAllDay; InstanceFixer = id}
         match t with
         | Outlook -> outlookFunctions
         | Google -> googleFunctions
@@ -106,7 +111,7 @@ module Calendar =
                             let endTime = instance.EndDateTime
                             let isAllDay = isFlaggedAllDay || (startTime <= dateStartTime  && endTime >= dateEndTime)
                             {Domain= calendarName; 
-                            Name= customFunctions.NameFormatter eventName; 
+                            Name= eventName; 
                             StartTime = System.DateTimeOffset startTime; 
                             EndTime = System.DateTimeOffset endTime; 
                             BusyStatus = busyStatus;

@@ -2,6 +2,13 @@
 
 open Newtonsoft.Json
 
+type Accent =
+    | Default
+    | Primary
+    | Warning
+    | Danger
+    | Success
+
 module SharedCode =
     let seqTopN (n:int) (s: 'T seq) =
         if Seq.length s > n then Seq.take n s

@@ -27,7 +27,7 @@ module Server =
     let logCall (name:string) =
         System.Diagnostics.Debug.Write ("Server recieved " + name + " call at " + System.DateTime.Now.ToString() + "\n")
     module OneBusAway =
-        type ResponseArrivals = {Time: string; TimeUntil: string; Accent: bool}
+        type ResponseArrivals = {Time: string; TimeUntil: string; Accent: bool; Name:string}
         type Response = {RouteTitle: string; Arrivals: ResponseArrivals list}
 
         [<Rpc>]
@@ -48,7 +48,7 @@ module Server =
                                                             else Some (c,Seq.map Option.get r,s) 
                                                         | _ -> None)
                             |> Seq.map (fun (commute,routes,stop) -> 
-                                            let arrivals = OneBusAway.getArrivalsForStopAndRoutesWithCache stop.Id (Seq.map (fun (x:OneBusAway.Route)-> x.Id) routes)
+                                            let arrivals = OneBusAway.getArrivalsForStopAndRoutesWithCache stop routes
                                             (commute,routes,stop,arrivals))
 
                         let result =
@@ -65,7 +65,10 @@ module Server =
                                                     let raw = showTime.ToString(config.TimeFormat) 
                                                     if isPredicted then raw
                                                     else raw + "*"
-                                                {Time = timeString;TimeUntil = timeUntilArrivalString; Accent = (showTime - arrival.Current).Minutes <= 5}
+                                                {Name = arrival.Name; 
+                                                    Time = timeString;
+                                                    TimeUntil = timeUntilArrivalString;
+                                                    Accent = (showTime - arrival.Current).Minutes <= 5}
                                             List.map arrivalToString (List.ofSeq a)
                                         {RouteTitle = routeTitle; Arrivals = arrivalStrings})
                             |> List.ofSeq

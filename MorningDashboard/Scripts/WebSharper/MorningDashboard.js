@@ -95,35 +95,37 @@
      {
       return function(resultCommutes)
       {
-       var mapping,lists,resultBlocks,arg105,arg106,arg107;
+       var mapping,lists,resultBlocks,arg106,arg107,arg108;
        mapping=function(result)
        {
-        var patternInput,routeTitle,arrivalStrings,mapping1,arrivalElements,arg103,arg104;
+        var patternInput,routeTitle,arrivalStrings,mapping1,arrivalElements,arg104,arg105;
         patternInput=[result.RouteTitle,result.Arrivals];
         routeTitle=patternInput[0];
         arrivalStrings=patternInput[1];
         mapping1=function(arrival)
         {
-         var arg10,arg101,x,arg102,x1;
+         var arg10,arg101,x,arg102,x1,arg103,x2;
          x=arrival.Time;
          arg101=List.ofArray([Tags.Tags().text(x)]);
-         x1=arrival.TimeUntil;
+         x1=arrival.Name;
          arg102=List.ofArray([Tags.Tags().text(x1)]);
-         arg10=List.ofArray([Operators.add(Tags.Tags().NewTag("td",arg101),List.ofArray([Attr.Attr().NewAttr("class","col-md-8")])),Operators.add(Tags.Tags().NewTag("td",arg102),List.ofArray([Attr.Attr().NewAttr("class","col-md-4"+(arrival.Accent?" text-warning":""))]))]);
+         x2=arrival.TimeUntil;
+         arg103=List.ofArray([Tags.Tags().text(x2)]);
+         arg10=List.ofArray([Operators.add(Tags.Tags().NewTag("td",arg101),List.ofArray([Attr.Attr().NewAttr("class","col-md-5")])),Operators.add(Tags.Tags().NewTag("td",arg102),List.ofArray([Attr.Attr().NewAttr("class","col-md-3")])),Operators.add(Tags.Tags().NewTag("td",arg103),List.ofArray([Attr.Attr().NewAttr("class","col-md-4"+(arrival.Accent?" text-warning":""))]))]);
          return Tags.Tags().NewTag("tr",arg10);
         };
         arrivalElements=List.map(mapping1,arrivalStrings);
-        arg104=List.ofArray([Tags.Tags().text(routeTitle)]);
-        arg103=List.ofArray([Operators.add(Tags.Tags().NewTag("h5",arg104),List.ofArray([Attr.Attr().NewAttr("class","text-primary")]))]);
-        return List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg103),List.ofArray([Attr.Attr().NewAttr("class","panel-body")])),Seq.length(arrivalStrings)>0?Operators.add(Tags.Tags().NewTag("table",arrivalElements),List.ofArray([Attr.Attr().NewAttr("class","table")])):Client1.emptyTable("No upcoming arrivals")]);
+        arg105=List.ofArray([Tags.Tags().text(routeTitle)]);
+        arg104=List.ofArray([Operators.add(Tags.Tags().NewTag("h5",arg105),List.ofArray([Attr.Attr().NewAttr("class","text-primary")]))]);
+        return List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg104),List.ofArray([Attr.Attr().NewAttr("class","panel-body")])),Seq.length(arrivalStrings)>0?Operators.add(Tags.Tags().NewTag("table",arrivalElements),List.ofArray([Attr.Attr().NewAttr("class","table")])):Client1.emptyTable("No upcoming arrivals")]);
        };
        lists=List.map(mapping,resultCommutes);
        resultBlocks=List.concat(lists);
        block["HtmlProvider@33"].Clear(block.get_Body());
-       arg107=List.ofArray([Tags.Tags().text("Commute")]);
-       arg106=List.ofArray([Tags.Tags().NewTag("h4",arg107)]);
-       arg105=List.append(List.singleton(Operators.add(Tags.Tags().NewTag("div",arg106),List.ofArray([Attr.Attr().NewAttr("class","panel-heading")]))),resultBlocks);
-       return block.AppendI(Operators.add(Tags.Tags().NewTag("div",arg105),List.ofArray([Attr.Attr().NewAttr("class","panel panel-default")])));
+       arg108=List.ofArray([Tags.Tags().text("Commute")]);
+       arg107=List.ofArray([Tags.Tags().NewTag("h4",arg108)]);
+       arg106=List.append(List.singleton(Operators.add(Tags.Tags().NewTag("div",arg107),List.ofArray([Attr.Attr().NewAttr("class","panel-heading")]))),resultBlocks);
+       return block.AppendI(Operators.add(Tags.Tags().NewTag("div",arg106),List.ofArray([Attr.Attr().NewAttr("class","panel panel-default")])));
       };
      };
      getCommuteData=function()
