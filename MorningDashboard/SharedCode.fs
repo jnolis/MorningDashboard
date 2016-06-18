@@ -39,8 +39,7 @@ module SharedCode =
                                 |> System.IO.Path.GetFullPath
                     | None -> ""
 
-    let solutionLocation () = getUpLocation 4
-    let projectLocation () = getUpLocation 3
+    let projectLocation () = getUpLocation 2
 
     let getKey (keyFile:string) (keyName:string) =
         keyFile
@@ -52,8 +51,10 @@ module SharedCode =
         |> (fun key -> string key.["Key"])
 
     let getKeyFile () =
-        System.IO.Path.GetFullPath (projectLocation() + @"\Keys.json")
-
+        try
+            System.Web.HttpContext.Current.Request.PhysicalApplicationPath + @"Content/Keys.json"
+        with
+           | _ ->  (projectLocation()) + "Content\Keys.json"
     let getKeyFromProject (keyName:string) =
         getKey (getKeyFile ()) keyName
 

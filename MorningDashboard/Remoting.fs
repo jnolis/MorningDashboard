@@ -13,6 +13,7 @@ type Config =
         Commutes: OneBusAway.Commute seq;
         WeatherLocation: Wunderground.Location;
         TimeFormat: string;
+        UrlCode: string;
     }
 
 

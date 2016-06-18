@@ -4,14 +4,15 @@ open WebSharper
 open WebSharper.Sitelets
 
 type EndPoint =
-    | [<EndPoint "/">] Home
+    | Index
+    | Dashboard of code: string
 
 
 module Site =
     open WebSharper.Html.Server
 
     let HomePage =
-        let HomePageTemplate =
+        let homePageTemplate =
               Content.Template<Element>("~/Main.html").With("body", id)
 
 
@@ -29,8 +30,22 @@ module Site =
                         
                         
                         ] -< [Attr.Id "bodyTemplate"; Attr.Class "container"]
-        Content.WithTemplate HomePageTemplate body
+        Content.WithTemplate homePageTemplate body
+
+
+
+    let ErrorPage = 
+        let errorPageTemplate =
+              Content.Template<Element>("~/Main.html").With("body", id)
+        let body = Div [
+                        H5 [Text "Invalid code"]
+                        ] -< [Attr.Id "bodyTemplate"; Attr.Class "container"]
+        Content.WithTemplate errorPageTemplate body
 
     [<Website>]
     let Main =
-        Sitelet.Infer (fun (context:Context<EndPoint>) (endpoint:EndPoint) -> HomePage)
+        Sitelet.Infer (fun (context:Context<EndPoint>) (endpoint:EndPoint) -> 
+                            match endpoint with 
+                                | Index -> ErrorPage
+                                | Dashboard code -> 
+                                    if code = Server.config.UrlCode then HomePage else ErrorPage)
