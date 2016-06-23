@@ -41,7 +41,7 @@ module Client =
                     [
                         Div [H5 [Text routeTitle]  -< [Attr.Class "text-primary"]] -< [Attr.Class "panel-body"];
                         (if List.length arrivalStrings > 0 then
-                            Table arrivalElements -< [Attr.Class "table"]
+                            Table arrivalElements -< [Attr.Class "table table-condensed"]
                         else emptyTable "No upcoming arrivals")
                     ]
                     
@@ -119,7 +119,7 @@ module Client =
                         [
                             Div [H5 [Text calendar.Name] -< [Attr.Class "text-primary"]] -< [Attr.Class "panel-body"];
                             (if List.length calendar.Instances > 0 then
-                                Table instanceElements -< [Attr.Class "table"]
+                                Table instanceElements -< [Attr.Class "table table-condensed"]
                             else emptyTable "No events today")
                         ]
                     )

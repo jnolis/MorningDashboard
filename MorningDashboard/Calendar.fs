@@ -146,7 +146,7 @@ module Calendar =
             calendarInstanceSets
             |> Seq.map (fun calendar -> calendar.Instances)
             |> Seq.concat
-            |> Seq.groupBy (fun instance -> (instance.StartTime,instance.EndTime,instance.BusyStatus,instance.Name,instance.IsAllDay))
+            |> Seq.groupBy (fun instance -> (instance.StartTime,instance.EndTime,instance.Name,instance.IsAllDay))
             |> Seq.map (fun (key, s) ->
                 let domain =
                     s 

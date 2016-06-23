@@ -51,6 +51,7 @@ module Server =
                                             let arrivals = OneBusAway.getArrivalsForStopAndRoutesWithCache stop routes
                                             (commute,routes,stop,arrivals))
 
+                        let maxListLength = 5
                         let result =
                             routesStopsAndArrivals
                             |> Seq.map (fun (commute, r, s, a) ->
@@ -70,6 +71,7 @@ module Server =
                                                     TimeUntil = timeUntilArrivalString;
                                                     Accent = (showTime - arrival.Current).Minutes <= 5}
                                             List.map arrivalToString (List.ofSeq a)
+                                            |> (fun x -> if List.length x > maxListLength then List.take maxListLength x else x)
                                         {RouteTitle = routeTitle; Arrivals = arrivalStrings})
                             |> List.ofSeq
                         Some result
@@ -137,8 +139,9 @@ module Server =
                         span.TotalDays.ToString("#.#") + "d"
                     else if span.TotalHours >= 1.0 then
                         span.TotalHours.ToString("#.#") + "h"
-                    else 
+                    else if span.TotalMinutes >= 1.0 then
                         span.TotalMinutes.ToString("#") + "m"
+                    else "0m"
                 instance.StartTime.ToString(config.TimeFormat) + " (" + duration + ")"
         [<Rpc>]
         let getBlockData() =
