@@ -30,6 +30,11 @@ module Calendar =
     type Calendar = {Name: string; Date: System.DateTime; Instances: Instance seq}
     let calendarCache = SharedCode.makeNewCache<CalendarInfo*System.DateTime,Calendar>()
 
+    let cleanCache () =
+        let today = System.DateTime.Today
+        calendarCache.Keys
+        |> Seq.filter (fun x -> snd x < today)
+        |> Seq.iter (calendarCache.Remove >> ignore)
 
     let getCustomFunctions (t: CalendarType) =
         let outlookFunctions = 
@@ -132,6 +137,7 @@ module Calendar =
         with | _ -> None
 
     let getCalendarWithCache (date: System.DateTime) (calendarInfo) =
+        cleanCache()
         SharedCode.getFromCache calendarCache (15.0*60.0-5.0) (fun (i,d) -> getCalendar d i) (calendarInfo,date)
 
     let getCombinedCalendarWithCache (date: System.DateTime) (calendarInfos: CalendarInfo seq) =
