@@ -24,7 +24,7 @@ module Site =
                 Div [
                         Div [Attr.Class "col-lg-3"] -<
                                 [   ClientSide <@ Client.trafficMapBlock() @>
-                                    ClientSide <@ Client.oneBusAwayBlock() @>]
+                                    ClientSide <@ Client.commuteBlock() @>]
                         Div [Attr.Class "col-lg-4"] -<
                                 [   ClientSide <@ Client.currentTimeBlock() @>
                                     ClientSide <@ Client.wundergroundBlock() @>]
@@ -39,7 +39,7 @@ module Site =
                                     ClientSide <@ Client.wundergroundBlock() @>
                                     ClientSide <@ Client.calendarBlock() @>
                                     ClientSide <@ Client.trafficMapBlock() @>
-                                    ClientSide <@ Client.oneBusAwayBlock() @>
+                                    ClientSide <@ Client.commuteBlock() @>
                                     ]                       
                         ] -< [Attr.Id "bodyTemplate"; Attr.Class "container"]
         Content.WithTemplate homePageTemplate body

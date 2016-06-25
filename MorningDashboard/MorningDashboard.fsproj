@@ -44,6 +44,7 @@
   <ItemGroup>
     <Compile Include="SharedCode.fs" />
     <Compile Include="OneBusAway.fs" />
+    <Compile Include="BingMaps.fs" />
     <Compile Include="Wunderground.fs" />
     <Compile Include="Calendar.fs" />
     <Compile Include="Twitter.fs" />
