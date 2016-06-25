@@ -147,18 +147,27 @@ module Server =
         let getBlockData() =
             async {
                 logCall "Calendar"
-                let result = 
+                let getCalendarFromDateAndName (date: System.DateTime) (name: string) = 
                     try
-                        let date = System.DateTimeOffset.Now.Date 
                         let fullCalendar = Calendar.getCombinedCalendarWithCache date config.Calendars
                         let instances = 
                                 fullCalendar.Instances
                                 |> Seq.map (fun instance -> {Event = instance.Name; Time = generateTimeAndDuration instance; Domain = instance.Domain})
                                 |> Seq.toList
-                        let calendars = List.singleton {Name=fullCalendar.Name; Instances=instances}
-                        Some {Calendars = calendars}
+                        Some {Name=name; Instances=instances}
                     with | _ -> None
-                    
+
+                let todayCalendarOption = getCalendarFromDateAndName System.DateTimeOffset.Now.Date "Today"
+                let tomorrowCalendarOption = getCalendarFromDateAndName (System.DateTimeOffset.Now.AddDays(1.0).Date) "Tomorrow"
+                
+                let result = 
+                    match (todayCalendarOption,tomorrowCalendarOption) with
+                    | (Some today, Some tomorrow) -> 
+                        if (List.length today.Instances ) + (List.length tomorrow.Instances ) <= 10 then
+                            Some { Calendars = [today;tomorrow]}
+                        else Some {Calendars = [today]}
+                    | (Some today, None) -> Some {Calendars =[today]}
+                    | _ -> None
                 return result
             }
 

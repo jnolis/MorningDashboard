@@ -128,7 +128,7 @@ module Client =
             block.Append 
                 (Div
                         (List.append
-                            (List.singleton(Div [H4 [Text "Daily events" ]] -< [Attr.Class "panel-heading"]))
+                            (List.singleton(Div [H4 [Text "Calendar" ]] -< [Attr.Class "panel-heading"]))
                             calendarElements)
                          -< [Attr.Class "panel panel-default"])
         let getData = Server.Calendar.getBlockData
