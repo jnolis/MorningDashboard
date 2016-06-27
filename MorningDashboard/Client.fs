@@ -25,43 +25,32 @@ module Client =
 
     let commuteBlock() =        
         let updateCommuteBlock (block:Element) (resultCommutes: Server.Commute.Response list) =
-            let resultBlocks =
-                resultCommutes
-                |> List.map( fun fullResult ->
-                    match fullResult with
-                    | Server.Commute.Bus result ->
-                        let (routeTitle,arrivalStrings) = (result.RouteTitle,result.Arrivals)
-                        let arrivalElements =
-                            arrivalStrings
-                            |> List.map (fun arrival ->
-                                            TR [
-                                                TD [Text (arrival.Time)]-< [Attr.Class "col-md-5"]
-                                                TD [Text (arrival.Name)]-< [Attr.Class "col-md-3"]
-                                                TD [Text (arrival.TimeUntil)]-< [Attr.Class ("col-md-4" + if arrival.Accent then " text-warning" else "")]
-                                            ]
-                                        )
-                        [
-                            Div [H5 [Text routeTitle]  -< [Attr.Class "text-primary"]] -< [Attr.Class "panel-body"];
-                            (if List.length arrivalStrings > 0 then
-                                Table arrivalElements -< [Attr.Class "table table-condensed"]
-                            else emptyTable "No upcoming arrivals")
-                        ]
+            let commuteMiniBlock (result:Server.Commute.Response) = 
+                let makeRow (t:Server.Commute.TravelResponse) =
+                    match t with
+                    | Server.Commute.Bus arrival ->
+                        TR [
+                            TD [Text ("Bus "+arrival.Name)]-< [Attr.Class "col-md-4"]
+                            TD [Text (arrival.Time + " " + arrival.TimeUntil)]-< [Attr.Class ("col-md-4" + if arrival.Accent then " text-warning" else "")]
+                            TD [Text ("-")]-< [Attr.Class "col-md-4"]
+                            ]
                     | Server.Commute.Car result ->
-                        [
-                            Div [H5 [Text result.RouteTitle]  -< [Attr.Class "text-primary"]] -< [Attr.Class "panel-body"];
-                                Table   [TR [
-                                                TD [Text (result.Time)]-< [Attr.Class "col-md-4"]
-                                                TD [Text ("("+(result.TrafficTime) + " w/ traffic)")]-< [Attr.Class "col-md-8"]
-                                            ]] -< [Attr.Class "table table-condensed"]
-                        ]
-                        )
-                |> List.concat
+                        TR [
+                            TD [Text ("Car")]-< [Attr.Class "col-md-4"]
+                            TD [Text ("-")]-< [Attr.Class "col-md-4"]
+                            TD [Text ("10:00AM "+(result.TrafficTime))]-< [Attr.Class "col-md-4"]
+                            ]
+                [
+                    Div [H5 [Text result.RouteTitle]  -< [Attr.Class "text-primary"]] -< [Attr.Class "panel-body"];
+                        Table (List.map makeRow result.TravelResponses) -< [Attr.Class "table table-condensed"]
+                ]
 
             do block.Clear()
             block.Append 
                 (Div (List.append
                             (List.singleton (Div [H4 [Text "Commute" ]] -< [Attr.Class "panel-heading"]))
-                            resultBlocks)
+                            (resultCommutes |> List.map commuteMiniBlock |> List.concat)
+                            )
                          -< [Attr.Class "panel panel-default"])
         let getCommuteData = Server.Commute.getBlockData
         refreshBlock "commuteBlock" 5 List.empty<Element> getCommuteData updateCommuteBlock

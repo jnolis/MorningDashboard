@@ -5,13 +5,18 @@ open WebSharper.Sitelets
 
 type Key = {Name: string; Key: string}
 
+type Commute =
+    {
+    Name: string;
+    BusRoute: OneBusAway.Commute;
+    CarRoute: BingMaps.OdPair;
+    }
 type Config =
     {
         Keys: Key seq;
         TwitterConfig: Twitter.TwitterConfig;
         Calendars: Calendar.CalendarInfo seq;
-        BusCommutes: OneBusAway.Commute seq;
-        CarCommutes: BingMaps.OdPair seq;
+        Commutes: Commute seq;
         WeatherLocation: Wunderground.Location;
         TimeFormat: string;
         UrlCode: string;
@@ -28,80 +33,81 @@ module Server =
     let logCall (name:string) =
         System.Diagnostics.Debug.Write ("Server recieved " + name + " call at " + System.DateTime.Now.ToString() + "\n")
     module Commute =
-        type ResponseArrivals = {Time: string; TimeUntil: string; Accent: bool; Name:string}
-        type BusResponse = {RouteTitle: string; Arrivals: ResponseArrivals list}
-        type CarResponse = {RouteTitle: string; Time: string; TrafficTime: string}
-        type Response = 
-            | Bus of BusResponse
+        type ResponseArrival = {Time: string; TimeUntil: string; Accent: bool; Name:string}
+        type CarResponse = {Name: string; Time: string; TrafficTime: string}
+        type TravelResponse = 
+            | Bus of ResponseArrival
             | Car of CarResponse
+        type Response =
+            {
+            RouteTitle: string
+            TravelResponses: TravelResponse list
+            }
         [<Rpc>]
         let getBlockData () =
             async {
                 let result =
                     try
-                        let bingMaps =
+                        let bingMaps (carCommute)=
                             async {
-                                logCall "BingMaps"
-                                let commutes =
-                                    config.CarCommutes
-                                    |> Seq.choose (fun od -> BingMaps.getCommuteWithCache od |> Option.map (fun x -> (od,x)))
-                                    |> Seq.map (fun (od,tt) -> 
-                                        {RouteTitle = od.Name + " (car)";
-                                        Time = (System.Math.Ceiling ((float tt.TravelTime)/60.0)).ToString()+"m";
-                                        TrafficTime=(System.Math.Ceiling ((float tt.TravelTimeTraffic)/60.0)).ToString()+"m"
-                                        })
-                                    |> Seq.map Car
-                                    |> List.ofSeq
-                                return commutes
-                                }
-                        let oneBusAway = 
-                            async {
-                                logCall "OneBusAway"
-                                let routesStopsAndArrivals =
-                                    config.BusCommutes
-                                    |> Seq.map (fun commute -> 
-                                                    let routes = Seq.map OneBusAway.getRouteInfoWithCache commute.RouteIds
-                                                    let stop = OneBusAway.getStopInfoWithCache commute.StopId
-                                                    (commute,routes,stop))
-                                    |> Seq.choose (fun crs -> match crs with 
-                                                                | (c,r, Some s) -> 
-                                                                    if Seq.exists Option.isNone r then None 
-                                                                    else Some (c,Seq.map Option.get r,s) 
-                                                                | _ -> None)
-                                    |> Seq.map (fun (commute,routes,stop) -> 
-                                                    let arrivals = OneBusAway.getArrivalsForStopAndRoutesWithCache stop routes
-                                                    (commute,routes,stop,arrivals))
-
-                                let maxListLength = 5
                                 let result =
-                                    routesStopsAndArrivals
-                                    |> Seq.map (fun (commute, r, s, a) ->
-                                                let routeTitle = commute.Name
-                                                let arrivalStrings =
-                                                    let arrivalToString (arrival:OneBusAway.Arrival) =
-                                                        let (showTime, isPredicted) = match arrival.Predicted with
-                                                                                        | Some p -> (p,true)
-                                                                                        | None -> (arrival.Scheduled,false)
-                                                        let timeUntilArrivalString = (showTime - arrival.Current).Minutes.ToString() + "m"
-                                                        let timeString = 
-                                                            let raw = showTime.ToString(config.TimeFormat) 
-                                                            if isPredicted then raw
-                                                            else raw + "*"
-                                                        {Name = arrival.Name; 
-                                                            Time = timeString;
-                                                            TimeUntil = timeUntilArrivalString;
-                                                            Accent = (showTime - arrival.Current).Minutes <= 5}
-                                                    List.map arrivalToString (List.ofSeq a)
-                                                    |> (fun x -> if List.length x > maxListLength then List.take maxListLength x else x)
-                                                {RouteTitle = routeTitle + " (bus)"; Arrivals = arrivalStrings})
-                                    |> List.ofSeq
-                                    |> List.map Bus
+                                    match BingMaps.getCommuteWithCache carCommute with
+                                    | Some tt ->
+                                            {
+                                                Name = "car";
+                                                Time = (System.Math.Ceiling ((float tt.TravelTime)/60.0)).ToString()+"m";
+                                                TrafficTime=(System.Math.Ceiling ((float tt.TravelTimeTraffic)/60.0)).ToString()+"m"
+                                                }
+                                            |> Car
+                                            |> List.singleton
+                                    | None -> List.empty<TravelResponse>
                                 return result
+                                }
+                        let oneBusAway (busCommute:OneBusAway.Commute) = 
+                            async {
+                                    let formatResponse (commute:OneBusAway.Commute) (r:OneBusAway.Route seq) (s:OneBusAway.Stop) a =
+                                        let routeTitle = commute.Name
+                                        let arrivalToString (arrival:OneBusAway.Arrival) =
+                                            let (showTime, isPredicted) = match arrival.Predicted with
+                                                                            | Some p -> (p,true)
+                                                                            | None -> (arrival.Scheduled,false)
+                                            let timeUntilArrivalString = (showTime - arrival.Current).Minutes.ToString() + "m"
+                                            let timeString = 
+                                                let raw = showTime.ToString(config.TimeFormat) 
+                                                if isPredicted then raw
+                                                else raw + "*"
+                                            {Name = arrival.Name; 
+                                                Time = timeString;
+                                                TimeUntil = timeUntilArrivalString;
+                                                Accent = (showTime - arrival.Current).Minutes <= 5}
+                                        (List.ofSeq a)
+                                        |> List.map arrivalToString
+                                        |> List.map Bus
+
+                                    let routes = Seq.choose OneBusAway.getRouteInfoWithCache busCommute.RouteIds
+                                    let result = 
+                                        match OneBusAway.getStopInfoWithCache busCommute.StopId with
+                                        | Some stop ->
+                                            let arrivals = OneBusAway.getArrivalsForStopAndRoutesWithCache stop routes
+                                            (formatResponse busCommute routes stop arrivals)
+                                        | None -> List.empty<TravelResponse>
+                                    return result
                             }
-                        [bingMaps;oneBusAway]
+                        let calculateCommute commute =
+                            async {
+                                let travelResponses = 
+                                    [bingMaps commute.CarRoute;oneBusAway commute.BusRoute]
+                                    |> Async.Parallel
+                                    |> Async.RunSynchronously
+                                    |> Array.toList
+                                    |> List.concat
+                                return {RouteTitle= commute.Name; TravelResponses = travelResponses}
+                            }
+                        config.Commutes
+                        |> Seq.map calculateCommute
                         |> Async.Parallel
                         |> Async.RunSynchronously
-                        |> List.concat
+                        |> List.ofArray
                         |> Some
                     with | _ -> None
                 return result

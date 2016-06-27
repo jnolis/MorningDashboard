@@ -22,13 +22,13 @@ module Site =
         let body = 
             if not isMobile then
                 Div [
-                        Div [Attr.Class "col-lg-3"] -<
+                        Div [Attr.Class "col-lg-4"] -<
                                 [   ClientSide <@ Client.trafficMapBlock() @>
                                     ClientSide <@ Client.commuteBlock() @>]
                         Div [Attr.Class "col-lg-4"] -<
                                 [   ClientSide <@ Client.currentTimeBlock() @>
                                     ClientSide <@ Client.wundergroundBlock() @>]
-                        Div [Attr.Class "col-lg-5"] -<
+                        Div [Attr.Class "col-lg-4"] -<
                                 [   ClientSide <@ Client.calendarBlock() @>]
                         ] -< [Attr.Id "bodyTemplate"; Attr.Class "container"]
             else 
