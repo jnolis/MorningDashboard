@@ -8,8 +8,8 @@ type Key = {Name: string; Key: string}
 type Commute =
     {
     Name: string;
-    BusRoute: OneBusAway.Commute;
-    CarRoute: BingMaps.OdPair;
+    Bus: OneBusAway.Commute;
+    Car: BingMaps.OdPair;
     }
 type Config =
     {
@@ -19,6 +19,7 @@ type Config =
         Commutes: Commute seq;
         WeatherLocation: Wunderground.Location;
         TimeFormat: string;
+        TimeFormatSmall: string;
         UrlCode: string;
     }
 
@@ -33,16 +34,41 @@ module Server =
     let logCall (name:string) =
         System.Diagnostics.Debug.Write ("Server recieved " + name + " call at " + System.DateTime.Now.ToString() + "\n")
     module Commute =
-        type ResponseArrival = {Time: string; TimeUntil: string; Accent: bool; Name:string}
-        type CarResponse = {Name: string; Time: string; TrafficTime: string}
-        type TravelResponse = 
-            | Bus of ResponseArrival
-            | Car of CarResponse
+        type TripMethod = | Bus of string | Car
+        type Departure =
+            | Now
+            | Scheduled of System.DateTimeOffset
+            | Predicted of System.DateTimeOffset
+        type Trip = {Departure: Departure; Duration: System.TimeSpan option; Method: TripMethod}
+        type TravelResponse = {Method: TripMethod; Departure: string; Arrival: string; Accent: bool}
         type Response =
             {
             RouteTitle: string
             TravelResponses: TravelResponse list
             }
+        let tripToTravelResponse (now: System.DateTimeOffset) (trip:Trip) =
+            let timeToString (asterisk: bool) (t:System.DateTimeOffset)  = 
+                t.ToString(config.TimeFormatSmall) + (if asterisk then "*" else "") + " (" + (t-now).Minutes.ToString() + ")"
+            {Method = trip.Method;
+             Departure = match trip.Departure with
+                            | Now -> "Now"
+                            | Predicted t -> timeToString false t
+                            | Scheduled t -> timeToString true t;
+             Arrival =
+                match (trip.Departure,trip.Duration) with
+                        | (_, None) -> "-"
+                        | (Now, Some d) -> timeToString false (now + d)
+                        | (Predicted t, Some d) -> timeToString false (t + d)
+                        | (Scheduled t, Some d) -> timeToString true (t + d);
+             Accent = match trip.Departure with
+                        | Now -> false
+                        | Predicted t -> 
+                            let timeUntil = (t-now)
+                            timeUntil.Minutes <= 5 && timeUntil.Minutes >= 0
+                        | Scheduled t -> 
+                            let timeUntil = (t-now)
+                            timeUntil.Minutes <= 5 && timeUntil.Minutes >= 0
+                }
         [<Rpc>]
         let getBlockData () =
             async {
@@ -53,36 +79,27 @@ module Server =
                                 let result =
                                     match BingMaps.getCommuteWithCache carCommute with
                                     | Some tt ->
+                                            let duration = tt.TravelTimeTraffic
                                             {
-                                                Name = "car";
-                                                Time = (System.Math.Ceiling ((float tt.TravelTime)/60.0)).ToString()+"m";
-                                                TrafficTime=(System.Math.Ceiling ((float tt.TravelTimeTraffic)/60.0)).ToString()+"m"
+                                                Method = Car;
+                                                Departure = Now;
+                                                Duration = Some duration;
                                                 }
-                                            |> Car
                                             |> List.singleton
-                                    | None -> List.empty<TravelResponse>
+                                    | None -> List.empty<Trip>
                                 return result
                                 }
                         let oneBusAway (busCommute:OneBusAway.Commute) = 
                             async {
-                                    let formatResponse (commute:OneBusAway.Commute) (r:OneBusAway.Route seq) (s:OneBusAway.Stop) a =
-                                        let routeTitle = commute.Name
-                                        let arrivalToString (arrival:OneBusAway.Arrival) =
-                                            let (showTime, isPredicted) = match arrival.Predicted with
-                                                                            | Some p -> (p,true)
-                                                                            | None -> (arrival.Scheduled,false)
-                                            let timeUntilArrivalString = (showTime - arrival.Current).Minutes.ToString() + "m"
-                                            let timeString = 
-                                                let raw = showTime.ToString(config.TimeFormat) 
-                                                if isPredicted then raw
-                                                else raw + "*"
-                                            {Name = arrival.Name; 
-                                                Time = timeString;
-                                                TimeUntil = timeUntilArrivalString;
-                                                Accent = (showTime - arrival.Current).Minutes <= 5}
+                                    let formatResponse (commute:OneBusAway.Commute) (r:OneBusAway.Route seq) (s:OneBusAway.Stop) (a: OneBusAway.Arrival seq) =
+                                        let arrivalToTrip (arrival:OneBusAway.Arrival) =
+                                            {Method = Bus arrival.Name; 
+                                             Departure = match arrival.Predicted with 
+                                                            | Some p -> Predicted p 
+                                                            | None -> Scheduled arrival.Scheduled;
+                                             Duration = None}
                                         (List.ofSeq a)
-                                        |> List.map arrivalToString
-                                        |> List.map Bus
+                                        |> List.map arrivalToTrip
 
                                     let routes = Seq.choose OneBusAway.getRouteInfoWithCache busCommute.RouteIds
                                     let result = 
@@ -90,18 +107,19 @@ module Server =
                                         | Some stop ->
                                             let arrivals = OneBusAway.getArrivalsForStopAndRoutesWithCache stop routes
                                             (formatResponse busCommute routes stop arrivals)
-                                        | None -> List.empty<TravelResponse>
+                                        | None -> List.empty<Trip>
                                     return result
                             }
                         let calculateCommute commute =
                             async {
-                                let travelResponses = 
-                                    [bingMaps commute.CarRoute;oneBusAway commute.BusRoute]
+                                let trips = 
+                                    [bingMaps commute.Car;oneBusAway commute.Bus]
                                     |> Async.Parallel
                                     |> Async.RunSynchronously
                                     |> Array.toList
                                     |> List.concat
-                                return {RouteTitle= commute.Name; TravelResponses = travelResponses}
+                                let now = System.DateTimeOffset.Now
+                                return {RouteTitle= commute.Name; TravelResponses = List.map (tripToTravelResponse now) trips}
                             }
                         config.Commutes
                         |> Seq.map calculateCommute

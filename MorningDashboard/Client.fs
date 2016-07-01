@@ -27,18 +27,14 @@ module Client =
         let updateCommuteBlock (block:Element) (resultCommutes: Server.Commute.Response list) =
             let commuteMiniBlock (result:Server.Commute.Response) = 
                 let makeRow (t:Server.Commute.TravelResponse) =
-                    match t with
-                    | Server.Commute.Bus arrival ->
+                        let transitMode = 
+                            match t.Method with
+                            | Server.Commute.TripMethod.Car -> TD [I [Attr.Class "fa fa-car"]]
+                            | Server.Commute.TripMethod.Bus x -> TD [I [Attr.Class "fa fa-bus"]; Small [Text (" " + x)]]
                         TR [
-                            TD [Text ("Bus "+arrival.Name)]-< [Attr.Class "col-md-4"]
-                            TD [Text (arrival.Time + " " + arrival.TimeUntil)]-< [Attr.Class ("col-md-4" + if arrival.Accent then " text-warning" else "")]
-                            TD [Text ("-")]-< [Attr.Class "col-md-4"]
-                            ]
-                    | Server.Commute.Car result ->
-                        TR [
-                            TD [Text ("Car")]-< [Attr.Class "col-md-4"]
-                            TD [Text ("-")]-< [Attr.Class "col-md-4"]
-                            TD [Text ("10:00AM "+(result.TrafficTime))]-< [Attr.Class "col-md-4"]
+                            transitMode -< [Attr.Class "col-md-2"]
+                            TD [Small [Text t.Departure]]-< [Attr.Class ("col-md-5" + if t.Accent then " text-warning" else "")]
+                            TD [Small [Text t.Arrival]]-< [Attr.Class "col-md-5"]
                             ]
                 [
                     Div [H5 [Text result.RouteTitle]  -< [Attr.Class "text-primary"]] -< [Attr.Class "panel-body"];

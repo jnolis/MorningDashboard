@@ -59,48 +59,51 @@
      {
       return function(resultCommutes)
       {
-       var commuteMiniBlock,arg10b,arg10c,arg10d,lists;
+       var commuteMiniBlock,arg10d,arg10e,arg10f,lists;
        commuteMiniBlock=function(result)
        {
-        var makeRow,arg108,arg109,x3,arg10a;
+        var makeRow,arg10a,arg10b,x4,arg10c;
         makeRow=function(t)
         {
-         var _,result1,arg10,arg101,arg102,arg103,x,arrival,arg104,arg105,x1,arg106,x2,arg107;
-         if(t.$==1)
+         var matchValue,transitMode,_,x,arg10,arg101,arg102,x1,arg103,arg104,arg105,arg106,arg107,x2,arg108,arg109,x3;
+         matchValue=t.Method;
+         if(matchValue.$==0)
           {
-           result1=t.$0;
-           arg101=List.ofArray([Tags.Tags().text("Car")]);
-           arg102=List.ofArray([Tags.Tags().text("-")]);
-           x="10:00AM "+result1.TrafficTime;
-           arg103=List.ofArray([Tags.Tags().text(x)]);
-           arg10=List.ofArray([Operators.add(Tags.Tags().NewTag("td",arg101),List.ofArray([Attr.Attr().NewAttr("class","col-md-4")])),Operators.add(Tags.Tags().NewTag("td",arg102),List.ofArray([Attr.Attr().NewAttr("class","col-md-4")])),Operators.add(Tags.Tags().NewTag("td",arg103),List.ofArray([Attr.Attr().NewAttr("class","col-md-4")]))]);
-           _=Tags.Tags().NewTag("tr",arg10);
+           x=matchValue.$0;
+           arg101=List.ofArray([Attr.Attr().NewAttr("class","fa fa-bus")]);
+           x1=" "+x;
+           arg102=List.ofArray([Tags.Tags().text(x1)]);
+           arg10=List.ofArray([Tags.Tags().NewTag("i",arg101),Tags.Tags().NewTag("small",arg102)]);
+           _=Tags.Tags().NewTag("td",arg10);
           }
          else
           {
-           arrival=t.$0;
-           x1="Bus "+arrival.Name;
-           arg105=List.ofArray([Tags.Tags().text(x1)]);
-           x2=arrival.Time+" "+arrival.TimeUntil;
-           arg106=List.ofArray([Tags.Tags().text(x2)]);
-           arg107=List.ofArray([Tags.Tags().text("-")]);
-           arg104=List.ofArray([Operators.add(Tags.Tags().NewTag("td",arg105),List.ofArray([Attr.Attr().NewAttr("class","col-md-4")])),Operators.add(Tags.Tags().NewTag("td",arg106),List.ofArray([Attr.Attr().NewAttr("class","col-md-4"+(arrival.Accent?" text-warning":""))])),Operators.add(Tags.Tags().NewTag("td",arg107),List.ofArray([Attr.Attr().NewAttr("class","col-md-4")]))]);
-           _=Tags.Tags().NewTag("tr",arg104);
+           arg104=List.ofArray([Attr.Attr().NewAttr("class","fa fa-car")]);
+           arg103=List.ofArray([Tags.Tags().NewTag("i",arg104)]);
+           _=Tags.Tags().NewTag("td",arg103);
           }
-         return _;
+         transitMode=_;
+         x2=t.Departure;
+         arg107=List.ofArray([Tags.Tags().text(x2)]);
+         arg106=List.ofArray([Tags.Tags().NewTag("small",arg107)]);
+         x3=t.Arrival;
+         arg109=List.ofArray([Tags.Tags().text(x3)]);
+         arg108=List.ofArray([Tags.Tags().NewTag("small",arg109)]);
+         arg105=List.ofArray([Operators.add(transitMode,List.ofArray([Attr.Attr().NewAttr("class","col-md-2")])),Operators.add(Tags.Tags().NewTag("td",arg106),List.ofArray([Attr.Attr().NewAttr("class","col-md-5"+(t.Accent?" text-warning":""))])),Operators.add(Tags.Tags().NewTag("td",arg108),List.ofArray([Attr.Attr().NewAttr("class","col-md-5")]))]);
+         return Tags.Tags().NewTag("tr",arg105);
         };
-        x3=result.RouteTitle;
-        arg109=List.ofArray([Tags.Tags().text(x3)]);
-        arg108=List.ofArray([Operators.add(Tags.Tags().NewTag("h5",arg109),List.ofArray([Attr.Attr().NewAttr("class","text-primary")]))]);
-        arg10a=List.map(makeRow,result.TravelResponses);
-        return List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg108),List.ofArray([Attr.Attr().NewAttr("class","panel-body")])),Operators.add(Tags.Tags().NewTag("table",arg10a),List.ofArray([Attr.Attr().NewAttr("class","table table-condensed")]))]);
+        x4=result.RouteTitle;
+        arg10b=List.ofArray([Tags.Tags().text(x4)]);
+        arg10a=List.ofArray([Operators.add(Tags.Tags().NewTag("h5",arg10b),List.ofArray([Attr.Attr().NewAttr("class","text-primary")]))]);
+        arg10c=List.map(makeRow,result.TravelResponses);
+        return List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg10a),List.ofArray([Attr.Attr().NewAttr("class","panel-body")])),Operators.add(Tags.Tags().NewTag("table",arg10c),List.ofArray([Attr.Attr().NewAttr("class","table table-condensed")]))]);
        };
        block["HtmlProvider@33"].Clear(block.get_Body());
-       arg10d=List.ofArray([Tags.Tags().text("Commute")]);
-       arg10c=List.ofArray([Tags.Tags().NewTag("h4",arg10d)]);
+       arg10f=List.ofArray([Tags.Tags().text("Commute")]);
+       arg10e=List.ofArray([Tags.Tags().NewTag("h4",arg10f)]);
        lists=List.map(commuteMiniBlock,resultCommutes);
-       arg10b=List.append(List.singleton(Operators.add(Tags.Tags().NewTag("div",arg10c),List.ofArray([Attr.Attr().NewAttr("class","panel-heading")]))),List.concat(lists));
-       return block.AppendI(Operators.add(Tags.Tags().NewTag("div",arg10b),List.ofArray([Attr.Attr().NewAttr("class","panel panel-default")])));
+       arg10d=List.append(List.singleton(Operators.add(Tags.Tags().NewTag("div",arg10e),List.ofArray([Attr.Attr().NewAttr("class","panel-heading")]))),List.concat(lists));
+       return block.AppendI(Operators.add(Tags.Tags().NewTag("div",arg10d),List.ofArray([Attr.Attr().NewAttr("class","panel panel-default")])));
       };
      };
      getCommuteData=function()

@@ -6,8 +6,8 @@ module OneBusAway =
     let apiKey = SharedCode.getKeyFromProject "OneBusAway"
 
     
-    type Commute = {Name: string; StopId: string; RouteIds: string seq}
-    type Arrival = {Name: string; Current: System.DateTimeOffset; Scheduled: System.DateTimeOffset; Predicted: System.DateTimeOffset option}
+    type Commute = {StopId: string; RouteIds: string seq}
+    type Arrival = {Name: string; Scheduled: System.DateTimeOffset; Predicted: System.DateTimeOffset option}
     type Route = {Id: string; LongName: string; ShortName: string; Description: string}
     type Stop = {Id: string; Name: string; Direction: string}
     
@@ -56,7 +56,7 @@ module OneBusAway =
                                         |> Some
                                     else None
                                 if scheduledDepartureInt = 0L then None else
-                                        Some {Name= route.ShortName; Current = currentTime; Scheduled= scheduledDeparture; Predicted = predictedDeparture}
+                                        Some {Name= route.ShortName; Scheduled= scheduledDeparture; Predicted = predictedDeparture}
                             | None -> None
                                     )
         
