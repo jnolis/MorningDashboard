@@ -57,45 +57,53 @@ module OneBusAway =
             let currentTime = System.DateTimeOffset.Now                    
             json
             |> (fun data -> data.["data"].["entry"].["arrivalsAndDepartures"])
-            |> Seq.choose (fun arrivalData -> 
-                            match Seq.tryFind (fun (r:Route) -> r.Id = (string arrivalData.["routeId"])) routes with
-                            | Some route ->
-                                let isPredicted = 
-                                    match string arrivalData.["predicted"] with
-                                    | "True" -> true
-                                    | "False" -> false
-                                    | _ -> failwith "Invalid data"
-                                let scheduledDepartureInt = 
-                                    arrivalData.["scheduledDepartureTime"] 
-                                    |> int64 
-                                let scheduledDeparture =
-                                    scheduledDepartureInt
-                                    |> System.DateTimeOffset.FromUnixTimeMilliseconds
-                                    |> (fun x -> System.TimeZoneInfo.ConvertTime(x,System.TimeZoneInfo.Local))
-                                    |> SharedCode.adjustToSystemTime currentTimeReference
-                                let predictedDeparture = 
-                                    let predictedInt = arrivalData.["predictedDepartureTime"] 
-                                                        |> int64 
-                                    if predictedInt > 0L && isPredicted then
-                                        predictedInt
-                                        |> System.DateTimeOffset.FromUnixTimeMilliseconds
-                                        |> (fun x -> System.TimeZoneInfo.ConvertTime(x,System.TimeZoneInfo.Local))
-                                        |> SharedCode.adjustToSystemTime currentTimeReference
-                                        |> Some
-                                    else None
-                                let trip = {Id = (string arrivalData.["tripId"])}
-                                if scheduledDepartureInt = 0L then None else
-                                        Some {
-                                                Commute.Name= route.ShortName; 
-                                                Commute.Departure = match predictedDeparture with 
-                                                                    | Some p -> p 
-                                                                    | None -> scheduledDeparture;
-                                                Commute.Arrival = match arrivalStop with
-                                                                    | Some a -> getArrivalTimeForTripAndStop trip a
-                                                                    | None -> None;
-                                                Commute.Type= if isPredicted then Predicted else Scheduled}
-                            | None -> None
+            |> Seq.map (fun arrivalData -> 
+                            async {
+                                    let result = 
+                                        match Seq.tryFind (fun (r:Route) -> r.Id = (string arrivalData.["routeId"])) routes with
+                                        | Some route ->
+                                            let isPredicted = 
+                                                match string arrivalData.["predicted"] with
+                                                | "True" -> true
+                                                | "False" -> false
+                                                | _ -> failwith "Invalid data"
+                                            let scheduledDepartureInt = 
+                                                arrivalData.["scheduledDepartureTime"] 
+                                                |> int64 
+                                            let scheduledDeparture =
+                                                scheduledDepartureInt
+                                                |> System.DateTimeOffset.FromUnixTimeMilliseconds
+                                                |> (fun x -> System.TimeZoneInfo.ConvertTime(x,System.TimeZoneInfo.Local))
+                                                |> SharedCode.adjustToSystemTime currentTimeReference
+                                            let predictedDeparture = 
+                                                let predictedInt = arrivalData.["predictedDepartureTime"] 
+                                                                    |> int64 
+                                                if predictedInt > 0L && isPredicted then
+                                                    predictedInt
+                                                    |> System.DateTimeOffset.FromUnixTimeMilliseconds
+                                                    |> (fun x -> System.TimeZoneInfo.ConvertTime(x,System.TimeZoneInfo.Local))
+                                                    |> SharedCode.adjustToSystemTime currentTimeReference
+                                                    |> Some
+                                                else None
+                                            let trip = {Id = (string arrivalData.["tripId"])}
+                                            if scheduledDepartureInt = 0L then None else
+                                                    Some {
+                                                            Commute.Name= route.ShortName; 
+                                                            Commute.Departure = match predictedDeparture with 
+                                                                                | Some p -> p 
+                                                                                | None -> scheduledDeparture;
+                                                            Commute.Arrival = match arrivalStop with
+                                                                                | Some a -> getArrivalTimeForTripAndStop trip a
+                                                                                | None -> None;
+                                                            Commute.Type= if isPredicted then Predicted else Scheduled}
+                                        | None -> None
+                                    return result
+                                    }
                                     )
+            |> Async.Parallel
+            |> Async.RunSynchronously
+            |> Seq.ofArray
+            |> Seq.choose id
         
     let getCommutesForStopAndRoutesWithCache (departureStop: Stop) (routes:Route seq) (arrivalStop: Stop option) =
         let arrivals = SharedCode.getFromCache commuteCache (14.5) (fun (d,r,a) -> getCommutesForStopAndRoutes d r a |> Some) (departureStop,routes,arrivalStop)

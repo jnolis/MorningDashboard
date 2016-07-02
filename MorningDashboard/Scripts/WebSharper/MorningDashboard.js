@@ -33,7 +33,7 @@
         x5=calendar.Name;
         arg105=List.ofArray([Tags.Tags().text(x5)]);
         arg104=List.ofArray([Operators.add(Tags.Tags().NewTag("h5",arg105),List.ofArray([Attr.Attr().NewAttr("class","text-primary")]))]);
-        return List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg104),List.ofArray([Attr.Attr().NewAttr("class","panel-body")])),Seq.length(calendar.Instances)>0?Operators.add(Tags.Tags().NewTag("table",instanceElements),List.ofArray([Attr.Attr().NewAttr("class","table table-condensed")])):Client1.emptyTable("No events today")]);
+        return List.ofArray([Operators.add(Tags.Tags().NewTag("div",arg104),List.ofArray([Attr.Attr().NewAttr("class","panel-body")])),Seq.length(calendar.Instances)>0?Operators.add(Tags.Tags().NewTag("table",instanceElements),List.ofArray([Attr.Attr().NewAttr("class","table table-condensed")])):Client1.emptyTable("No events")]);
        };
        lists=List.map(mapping,x);
        calendarElements=List.concat(lists);
