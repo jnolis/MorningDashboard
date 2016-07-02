@@ -8,7 +8,7 @@ type Key = {Name: string; Key: string}
 type Commute =
     {
     Name: string;
-    Bus: OneBusAway.Commute;
+    Bus: OneBusAway.CommuteId;
     Car: BingMaps.OdPair;
     }
 type Config =
@@ -89,23 +89,25 @@ module Server =
                                     | None -> List.empty<Trip>
                                 return result
                                 }
-                        let oneBusAway (busCommute:OneBusAway.Commute) = 
+                        let oneBusAway (busCommute:OneBusAway.CommuteId) = 
                             async {
-                                    let formatResponse (commute:OneBusAway.Commute) (r:OneBusAway.Route seq) (s:OneBusAway.Stop) (a: OneBusAway.Arrival seq) =
-                                        let arrivalToTrip (arrival:OneBusAway.Arrival) =
+                                    let formatResponse (commute:OneBusAway.CommuteId) (r:OneBusAway.Route seq) (s:OneBusAway.Stop) (a: OneBusAway.Commute seq) =
+                                        let arrivalToTrip (arrival:OneBusAway.Commute) =
                                             {Method = Bus arrival.Name; 
-                                             Departure = match arrival.Predicted with 
-                                                            | Some p -> Predicted p 
-                                                            | None -> Scheduled arrival.Scheduled;
-                                             Duration = None}
+                                             Departure = match arrival.Type with 
+                                                            | OneBusAway.TripType.Predicted -> Predicted arrival.Departure 
+                                                            | OneBusAway.TripType.Scheduled -> Scheduled arrival.Departure;
+                                             Duration = match arrival.Arrival with
+                                                            | Some a -> Some (a - arrival.Departure)
+                                                            | None -> None}
                                         (List.ofSeq a)
                                         |> List.map arrivalToTrip
-
+                                    let arrivalStop = OneBusAway.getStopInfoWithCache busCommute.ArrivalStopId
                                     let routes = Seq.choose OneBusAway.getRouteInfoWithCache busCommute.RouteIds
                                     let result = 
-                                        match OneBusAway.getStopInfoWithCache busCommute.StopId with
+                                        match OneBusAway.getStopInfoWithCache busCommute.DepartureStopId with
                                         | Some stop ->
-                                            let arrivals = OneBusAway.getArrivalsForStopAndRoutesWithCache stop routes
+                                            let arrivals = OneBusAway.getCommutesForStopAndRoutesWithCache stop routes arrivalStop
                                             (formatResponse busCommute routes stop arrivals)
                                         | None -> List.empty<Trip>
                                     return result
