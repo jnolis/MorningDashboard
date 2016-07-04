@@ -114,7 +114,7 @@ module Client =
                             Div [H5 [Text calendar.Name] -< [Attr.Class "text-primary"]] -< [Attr.Class "panel-body"];
                             (if List.length calendar.Instances > 0 then
                                 Table instanceElements -< [Attr.Class "table table-condensed"]
-                            else emptyTable "No events")
+                            else emptyTable "No events today")
                         ]
                     )
                 |> List.concat
