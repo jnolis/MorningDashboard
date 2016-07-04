@@ -27,29 +27,15 @@ module Commute =
     type Trip = {Departure: System.DateTimeOffset; Duration: System.TimeSpan; Mode: TripMode seq}
 
 
-    let rec commuteToTrip (c:Commute) =
-        match c with
-        | Trip t -> t
-        | Transfer trips ->
-            let ts = trips |> Seq.map commuteToTrip
-            {Departure = (Seq.head ts).Departure;
-             Duration =
-                let durations = ts |> Seq.map (fun t -> t.Duration)
-                Seq.fold (+) (Seq.head durations) (Seq.skip 1 durations);
-             Mode= 
-                ts 
-                |> Seq.map (fun t -> t.Mode) 
-                |> Seq.concat}
-        | Option ts ->
-            ts
-            |> Seq.map commuteToTrip
-            |> Seq.minBy (fun t -> t.Departure + t.Duration)
 
-    let walkParametersToTrip (w:WalkParameters) (minDepartureTime: System.DateTimeOffset) =
-        {
-        Mode = Seq.singleton Walk;
-        Departure = minDepartureTime;
-        Duration = new System.TimeSpan(w.WalkingMinutes}
+
+    let walkParametersToTrips (w:WalkParameters) (minDepartureTime: System.DateTimeOffset) =
+        Seq.singleton
+            {
+            Mode = Seq.singleton Walk;
+            Departure = minDepartureTime;
+            Duration = new System.TimeSpan(w.WalkingHours,w.WalkingMinutes,w.WalkingSeconds)
+            }
     module OneBusAway =
         let apiKey = SharedCode.getKeyFromProject "OneBusAway"
 
@@ -227,3 +213,32 @@ module Commute =
                 Seq.singleton {Mode= Seq.singleton Car; Duration = tt.TravelTimeTraffic; Departure = minDepartureTime}
             | None -> Seq.empty
                 
+
+    let rec commuteParametersToTrips (c:CommuteParameters) (minDepartureTime: System.DateTimeOffset)=
+        match c with
+        | CommuteParameters.Bus b -> OneBusAway.busParametersToTrips b minDepartureTime
+        | CommuteParameters.Car c -> BingMaps.carParametersToTrips c minDepartureTime
+        | CommuteParameters.Walk w -> walkParametersToTrips w minDepartureTime
+        | Transfer cp ->
+            let subTrips = 
+                cp 
+                |> Seq.map (fun c -> async{ return commuteParametersToTrips c minDepartureTime})
+                |> Async.Parallel
+                |> Async.RunSynchronously
+                |> Seq.ofArray
+            let startTrips =
+                Seq.singleton
+                    {Departure = minDepartureTime;
+                     Duration = new System.TimeSpan(0L);
+                     Mode= Seq.empty}
+            Seq.fold 
+                (fun (currentTrips: Trip seq) (nextTrips: Trip seq) ->
+                    currentTrips
+                    |> Seq.choose (fun trip -> 
+                                        
+                                        let possibleNextTrips =  Seq.filter (fun nt -> nt.Departure > trip.Departure + trip.Duration) nextTrips
+                                        if Seq.length possibleNextTrips > 0
+        | Option ts ->
+            ts
+            |> Seq.map commuteToTrip
+            |> Seq.minBy (fun t -> t.Departure + t.Duration)
